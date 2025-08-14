@@ -1,0 +1,21 @@
+include:
+  - compose_opensearch.yml
+services:
+  app:
+    build:
+      context: .
+      target: ruby
+    platform: linux/aarch64
+    volumes:
+      - ../..:/app
+      - gem_cache:/gems
+    environment:
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
+    env_file:
+      - env.development
+      - .env
+    command: "tail -f /dev/null"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+volumes:
+  gem_cache:
