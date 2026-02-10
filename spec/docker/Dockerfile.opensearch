@@ -1,4 +1,4 @@
-FROM opensearchproject/opensearch:3 AS opensearch
+FROM opensearchproject/opensearch:latest AS opensearch
 
 RUN bin/opensearch-plugin install analysis-icu
 

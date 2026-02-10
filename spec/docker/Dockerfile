@@ -1,4 +1,4 @@
-FROM ruby:alpine as ruby
+FROM ruby:ubuntu as ruby
 
 ARG UNAME=app
 ARG GNAME=$UNAME
@@ -9,7 +9,7 @@ ARG GID=1000
 
 RUN apk update
 RUN apk update && apk upgrade
-RUN apk add build-base at ripgrep ruby-bigdecimal sqlite-dev mariadb-dev mariadb-client
+RUN apk add build-base at ripgrep ruby-bigdecimal sqlite-dev mariadb-dev mariadb-client git
 #  RUN apk add bash
 
 RUN addgroup --gid "$GID" "$GNAME" \
@@ -37,7 +37,7 @@ WORKDIR /app
 COPY --chown=${UID}:${GID} . /app
 
 COPY Gemfile .
-RUN if [ -e "../../Gemfile.lock" ]; then cp "../../Gemfile.lock" ./; fi
+RUN if [ -e "Gemfile.lock" ]; then cp "Gemfile.lock" ./; fi
 
 RUN gem update --system
 RUN gem install ruby-json

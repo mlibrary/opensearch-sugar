@@ -8,7 +8,8 @@ end
 require "opensearch"
 
 require_relative "sugar/version"
-require_relative "index"
+require_relative "sugar/index"
+require_relative "sugar/client"
 
 module OpenSearch
   module Sugar
