@@ -21,7 +21,7 @@ module OpenSearch::Sugar
       new(client: client, name: name)
     end
 
-    def upload_settings(settings)
+    def update_settings(settings)
       client.update_settings(settings, name)
     end
 
@@ -29,7 +29,7 @@ module OpenSearch::Sugar
       client.indices.get_settings(index: name)
     end
 
-    def upload_mappings(mappings)
+    def update_mappings(mappings)
       client.update_mappings(mappings, name)
     end
 
