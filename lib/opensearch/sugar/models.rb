@@ -97,7 +97,7 @@ module OpenSearch::Sugar
       temp_to_field_map.each_pair do |tmp, real|
         payload[:processors] << {
           copy: {
-            source_field: tmp,
+            source_field: "#{tmp}.knn",
             target_field: real,
             ignore_missing: true,
             remove_source: true
