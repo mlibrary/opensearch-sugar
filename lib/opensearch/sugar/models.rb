@@ -50,8 +50,7 @@ module OpenSearch::Sugar
     # Get a list of ML models and their versions and internal identifiers
     # @return [Array<ML_INFO>] Array of name/version/id triples as ML_INFO structs
     def list
-      resp = raw_list
-      lst = resp.dig("hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
+      lst = raw_list.dig("hits", "hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
         model = ML_INFO.new(ml["name"], ml["model_version"], ml["model_id"])
         a << model
       end
@@ -79,7 +78,7 @@ module OpenSearch::Sugar
       raise "Can't find model #{model}" unless m
       url = "/_ingest/pipeline/#{name.gsub(/\s+/, " ").gsub(/\s+/, "_")}"
       field_map_to_temp = field_map.transform_values { |actual_target| "#{actual_target}_temp" }
-      temp_to_field_map = field_map.values.each_with_object({}) do |h, actual_target|
+      temp_to_field_map = field_map.values.each_with_object({}) do |actual_target, h|
         h["#{actual_target}_temp"] = actual_target
       end
 
