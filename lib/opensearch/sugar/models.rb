@@ -95,15 +95,11 @@ module OpenSearch::Sugar
 
       temp_to_field_map.each_pair do |tmp, real|
         payload[:processors] << {
-          set: {
-            field: real,
-            copy_from: tmp
-          }
-        }
-        payload[:processors] << {
-          remove: {
-            field: tmp,
-            ignore_missing: true
+          copy: {
+            source_field: tmp,
+            target_field: real,
+            ignore_missing: true,
+            remove_source: true
           }
         }
       end
