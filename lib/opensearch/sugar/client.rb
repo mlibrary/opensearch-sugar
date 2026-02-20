@@ -3,6 +3,7 @@
 require "delegate"
 require "opensearch-ruby"
 require_relative "models"
+require "httpx/adapters/faraday"
 
 module OpenSearch::Sugar
   class Client < SimpleDelegator
