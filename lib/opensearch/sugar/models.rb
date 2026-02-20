@@ -78,8 +78,10 @@ module OpenSearch::Sugar
       m = self[model]
       raise "Can't find model #{model}" unless m
       url = "/_ingest/pipeline/#{name.gsub(/\s+/, " ").gsub(/\s+/, "_")}"
-      field_map_to_temp = field_map.transform_values { |v| "#{v}_temp" }
-      temp_to_field_map = field_map.transform_values { |v| "#{v}_temp" }.invert
+      field_map_to_temp = field_map.transform_values { |actual_target| "#{actual_target}_temp" }
+      temp_to_field_map = field_map.values.each_with_object({}) do |h, actual_target|
+        h["#{actual_target}_temp"] = actual_target
+      end
 
       payload = {
         description: description,
