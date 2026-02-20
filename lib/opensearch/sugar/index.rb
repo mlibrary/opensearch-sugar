@@ -73,6 +73,8 @@ module OpenSearch::Sugar
       (index_analyzers + cluster_analyzers).uniq
     end
 
+    alias_method :analyzers, :all_available_analyzers
+
     # Return the tokens that would be created by putting the provided string into the
     # given analyzer
     # @param analyzer [String] Name of the analyzer
@@ -151,7 +153,7 @@ module OpenSearch::Sugar
     def index_document(doc, uid)
     end
 
-    def index!(filename)
+    def index_jsonl(filename)
     end
 
     private

@@ -36,7 +36,7 @@ module OpenSearch::Sugar
     def default_args
       {
         user: ENV["OPENSEARCH_USER"] || "admin",
-        password: ENV["OPENSEARCH_INITIAL_ADMIN_PASSWORD"],
+        password: ENV["OPENSEARCH_PASSWORD"] || ENV["OPENSEARCH_INITIAL_ADMIN_PASSWORD"],
         host: ENV["OPENSEARCH_URL"] || "https://localhost:9000",
         retry_on_failure: 5,
         request_timeout: 5,

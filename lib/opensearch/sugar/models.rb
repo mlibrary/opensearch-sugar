@@ -28,6 +28,8 @@ module OpenSearch::Sugar
       self[name]
     end
 
+    alias_method :deploy, :register
+
     # Get info about the latest version of a model by name, id, or partial name
     # @todo make sure models are unique by nickname if nickname is found
     # @param id_or_fullname_or_nickname [String] any of those things
@@ -48,12 +50,17 @@ module OpenSearch::Sugar
     # Get a list of ML models and their versions and internal identifiers
     # @return [Array<ML_INFO>] Array of name/version/id triples as ML_INFO structs
     def list
-      resp = @os.http.get("/_plugins/_ml/models/_search", body: {query: {match_all: {}}})
+      resp = raw_list
       lst = resp.dig("hits", "hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
         model = ML_INFO.new(ml["name"], ml["model_version"], ml["model_id"])
         a << model
       end
       lst.uniq
+    end
+
+    def raw_list
+      @os.http.get("/_plugins/_ml/models/_search",
+        body: {"query" => {"term" => {"chunk_number" => 0}}})
     end
 
     def undeploy!(name_or_id)
@@ -71,17 +78,35 @@ module OpenSearch::Sugar
       m = self[model]
       raise "Can't find model #{model}" unless m
       url = "/_ingest/pipeline/#{name.gsub(/\s+/, " ").gsub(/\s+/, "_")}"
+      field_map_to_temp = field_map.transform_values { |v| "#{v}_temp" }
+      temp_to_field_map = field_map.transform_values { |v| "#{v}_temp" }.invert
+
       payload = {
         description: description,
         processors: [
           {
             text_embedding: {
               model_id: m.id,
-              field_map: field_map
+              field_map: field_map_to_temp
             }
           }
         ]
       }
+
+      temp_to_field_map.each_pair do |tmp, real|
+        payload[:processors] << {
+          set: {
+            field: real,
+            copy_from: tmp
+          }
+        }
+        payload[:processors] << {
+          remove: {
+            field: tmp,
+            ignor_missing: true
+          }
+        }
+      end
       @os.http.put(url, body: payload)
     end
   end
