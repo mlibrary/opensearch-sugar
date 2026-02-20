@@ -51,7 +51,7 @@ module OpenSearch::Sugar
     # @return [Array<ML_INFO>] Array of name/version/id triples as ML_INFO structs
     def list
       resp = raw_list
-      lst = resp.dig("hits", "hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
+      lst = resp.dig("hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
         model = ML_INFO.new(ml["name"], ml["model_version"], ml["model_id"])
         a << model
       end
