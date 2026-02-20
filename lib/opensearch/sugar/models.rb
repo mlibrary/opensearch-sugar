@@ -103,7 +103,7 @@ module OpenSearch::Sugar
         payload[:processors] << {
           remove: {
             field: tmp,
-            ignor_missing: true
+            ignore_missing: true
           }
         }
       end
