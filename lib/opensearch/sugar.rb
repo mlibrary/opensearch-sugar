@@ -18,5 +18,9 @@ module OpenSearch
     def self.client(**kwargs)
       OpenSearch::Sugar::Client.new(**kwargs)
     end
+
+    def self.new(**kwargs)
+      client(**kwargs)
+    end
   end
 end
