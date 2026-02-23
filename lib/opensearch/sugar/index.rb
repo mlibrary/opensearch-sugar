@@ -15,9 +15,9 @@ module OpenSearch::Sugar
       new(client: client, name: name)
     end
 
-    def self.create(client:, name:)
+    def self.create(client:, name:, knn: true)
       raise ArgumentError.new("Index #{name} already exists") if client.indices.exists?(index: name)
-      client.indices.create(index: name, body: {settings: {index: {knn: true}}})
+      client.indices.create(index: name, body: {settings: {index: {knn: knn}}})
       new(client: client, name: name)
     end
 
