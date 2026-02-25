@@ -22,6 +22,9 @@ module OpenSearch
     # Base error class for OpenSearch::Sugar exceptions
     class Error < StandardError; end
 
+    # Raised when OpenSearch operations fail
+    class OpenSearchError < Error; end
+
     # Base error class for ML model operations
     class ModelError < Error; end
 

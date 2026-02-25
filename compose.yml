@@ -1,0 +1,106 @@
+services:
+  # OpenSearch service optimized for testing
+  opensearch:
+    build:
+      context: .
+      dockerfile: Dockerfile.opensearch
+    container_name: opensearch-test
+    environment:
+      # Cluster configuration
+      - cluster.name=opensearch-test
+      - node.name=opensearch-test-node
+      - discovery.type=single-node
+
+      # Security settings (disabled for faster testing)
+      - DISABLE_SECURITY_PLUGIN=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+
+      # Performance settings (optimized for testing, not production)
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+
+      # Plugin settings
+      - plugins.security.disabled=true
+
+      # Credentials from env file
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-TestPassword123!}
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+    ports:
+      - "9200:9200"
+
+    networks:
+      - test-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # Ruby test runner service
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+
+    container_name: ruby-test
+
+    environment:
+      # OpenSearch connection settings
+      - OPENSEARCH_URL=http://opensearch:9200
+      - OPENSEARCH_HOST=http://opensearch:9200
+      - OPENSEARCH_USER=admin
+      - OPENSEARCH_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-TestPassword123!}
+
+      # Test environment
+      - RAILS_ENV=test
+      - RACK_ENV=test
+      - CI=${CI:-false}
+
+    volumes:
+      # Mount source code for development
+      - .:/app:cached
+      # Preserve installed gems
+      - gems:/gems
+
+    networks:
+      - test-network
+
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+    # Keep container running for interactive testing
+    stdin_open: true
+    tty: true
+
+    # Override with test command
+    # Use: docker compose run test
+    command: bundle exec rspec
+
+volumes:
+  opensearch-data:
+    driver: local
+  gems:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+

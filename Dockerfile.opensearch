@@ -1,0 +1,18 @@
+# Optimized OpenSearch image for integration testing
+FROM opensearchproject/opensearch:2.18.0
+
+# Install analysis-icu plugin
+RUN bin/opensearch-plugin install --batch analysis-icu
+
+# Add health check script
+USER root
+RUN echo '#!/bin/bash\ncurl -f -k -u admin:$OPENSEARCH_INITIAL_ADMIN_PASSWORD https://localhost:9200/_cluster/health || exit 1' > /usr/share/opensearch/healthcheck.sh && \
+    chmod +x /usr/share/opensearch/healthcheck.sh
+
+USER opensearch
+
+# Health check for container orchestration
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
+  CMD /usr/share/opensearch/healthcheck.sh
+
+
