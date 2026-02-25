@@ -1,11 +1,43 @@
 module OpenSearch::Sugar
+  # Manages OpenSearch ML (Machine Learning) models
+  #
+  # This class provides methods to register, deploy, list, and manage
+  # machine learning models in OpenSearch using the ML Commons plugin.
+  #
+  # @see https://docs.opensearch.org/latest/ml-commons-plugin/index/
   class Models
+    # Struct representing ML model information
+    #
+    # @!attribute name
+    #   @return [String] The model name
+    # @!attribute version
+    #   @return [String] The model version
+    # @!attribute id
+    #   @return [String] The internal OpenSearch model ID
     ML_INFO = Struct.new(:name, :version, :id)
 
+    # Initializes a new Models manager
+    #
+    # @param os [OpenSearch::Sugar::Client] The OpenSearch client instance
     def initialize(os)
       @os = os
     end
 
+    # Registers and deploys a machine learning model
+    #
+    # This method registers a new ML model and automatically deploys it.
+    # If the model already exists, it returns the existing model information.
+    # The method polls the task status until registration completes.
+    #
+    # @param name [String] The name of the model to register
+    # @param version [String] The version of the model
+    # @param format [String] The model format (default: "TORCH_SCRIPT")
+    # @return [ML_INFO, nil] The model information struct, or nil if not found
+    # @raise [RuntimeError] If model registration fails
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/model-apis/register-model/
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/model-apis/deploy-model/
+    # @example Register a TorchScript model
+    #   model = client.models.register(name: "my-model", version: "1.0.0")
     def register(name:, version:, format: "TORCH_SCRIPT")
       config = {
         name: name,
@@ -57,22 +89,74 @@ module OpenSearch::Sugar
       lst.uniq
     end
 
+    # Retrieves the raw list of ML models from OpenSearch
+    #
+    # This method queries the ML models index for all registered models,
+    # filtering by chunk_number 0 to get base model information.
+    #
+    # @return [Hash] The raw search response from OpenSearch
+    # @api private
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/model-apis/search-model/
     def raw_list
       @os.http.get("/_plugins/_ml/models/_search",
         body: {"query" => {"term" => {"chunk_number" => 0}}})
     end
 
+    # Undeploys a machine learning model
+    #
+    # This method undeploys a deployed ML model, freeing up cluster resources.
+    # The model remains registered but is no longer available for inference.
+    #
+    # @param name_or_id [String] The model name, ID, or nickname pattern
+    # @return [Hash] The response from OpenSearch
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/model-apis/undeploy-model/
+    # @example Undeploy a model by name
+    #   client.models.undeploy!("my-model")
     def undeploy!(name_or_id)
       m = self[name_or_id]
       @os.http.post("/_plugins/_ml/models/#{m.id}/_undeploy")
     end
 
+    # Deletes a machine learning model
+    #
+    # This method first undeploys the model if it's deployed, then permanently
+    # removes it from OpenSearch.
+    #
+    # WARNING: This operation is destructive and cannot be undone.
+    #
+    # @param name_or_id [String] The model name, ID, or nickname pattern
+    # @return [Hash] The response from OpenSearch
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/model-apis/delete-model/
+    # @example Delete a model
+    #   client.models.delete!("my-model")
     def delete!(name_or_id)
       m = self[name_or_id]
       undeploy!(m.id)
       @os.http.delete("/_plugins/_ml/models/#{m.id}")
     end
 
+    # Creates an ingest pipeline for text embedding using an ML model
+    #
+    # This method creates an ingest pipeline that uses a text embedding model
+    # to automatically generate embeddings for specified fields during document ingestion.
+    # The pipeline includes a text_embedding processor and copy processors to move
+    # the embeddings to their final destination fields.
+    #
+    # @param name [String] The name for the pipeline (spaces will be converted to underscores)
+    # @param model [String] The model name, ID, or nickname to use for embeddings
+    # @param description [String] A description of the pipeline's purpose
+    # @param field_map [Hash{String => String}] A hash mapping source fields to target embedding fields
+    # @return [Hash] The response from OpenSearch
+    # @raise [RuntimeError] If the specified model cannot be found
+    # @see https://docs.opensearch.org/latest/ingest-pipelines/
+    # @see https://docs.opensearch.org/latest/ml-commons-plugin/api/ingest-pipelines/index/
+    # @example Create a text embedding pipeline
+    #   client.models.create_pipeline(
+    #     name: "my-embedding-pipeline",
+    #     model: "sentence-transformers",
+    #     description: "Embed product descriptions",
+    #     field_map: { "description" => "description_embedding" }
+    #   )
     def create_pipeline(name:, model:, description:, field_map:)
       m = self[model]
       raise "Can't find model #{model}" unless m

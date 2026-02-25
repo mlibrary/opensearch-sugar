@@ -47,8 +47,20 @@ module OpenSearch::Sugar
       }
     end
 
-    # Set the log level. You can use a specific logger, or default to the root logger
-    # See https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/
+    # Sets the log level for OpenSearch cluster logging
+    #
+    # This method updates the cluster settings to change the logging level for a specific logger.
+    # You can use a specific logger, or default to the root logger.
+    #
+    # @param logger [String] The logger name to configure (default: "logger._root")
+    # @param level [String] The log level to set (default: "warn"). Valid values include: "trace", "debug", "info", "warn", "error"
+    # @return [Hash] The response from the OpenSearch cluster settings update
+    # @see https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/
+    # @see https://docs.opensearch.org/latest/api-reference/cluster-api/cluster-settings/
+    # @example Set root logger to debug level
+    #   client.set_log_level(level: "debug")
+    # @example Set a specific logger to trace level
+    #   client.set_log_level(logger: "logger.index.search.slowlog", level: "trace")
     def set_log_level(logger: "logger._root", level: "warn")
       http.put("_cluster/settings", body: {persistent: {logger.to_s => level.to_s}})
     end
@@ -61,6 +73,15 @@ module OpenSearch::Sugar
       indices.exists?(index: name)
     end
 
+    # Retrieves a list of all index names in the OpenSearch cluster
+    #
+    # This method queries the cluster state metadata to get all index names.
+    #
+    # @return [Array<String>] An array of index names in the cluster
+    # @see https://docs.opensearch.org/latest/api-reference/cluster-api/cluster-state/
+    # @example Get all index names
+    #   client.index_names
+    #   # => ["my-index", "another-index", "test-index"]
     def index_names
       cluster.state["metadata"]["indices"].keys
     end
@@ -73,6 +94,17 @@ module OpenSearch::Sugar
       Index.open(client: self, name: index_name)
     end
 
+    # Opens an existing index or creates it if it doesn't exist
+    #
+    # This method first attempts to open an existing index. If the index doesn't exist
+    # (indicated by an ArgumentError), it creates a new index with the given name.
+    #
+    # @param index_name [String] The name of the index to open or create
+    # @return [OpenSearch::Sugar::Index] The opened or newly created index instance
+    # @raise [StandardError] If an error occurs other than the index not existing
+    # @see https://docs.opensearch.org/latest/api-reference/index-apis/create-index/
+    # @example Open existing index or create if it doesn't exist
+    #   index = client.open_or_create("my-index")
     def open_or_create(index_name)
       Index.open(client: self, name: index_name)
     rescue ArgumentError
