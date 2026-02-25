@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+LICENSE
+CHANGELOG.md
+README.md
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+.circleci
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+.rspec_status
+tmp/
+log/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+compose*.yml
+.dockerignore
+
+# Gems
+*.gem
+vendor/bundle/
+
+# Development
+.env.local
+.env.*.local
+

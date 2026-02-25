@@ -1,18 +1,6 @@
 # frozen_string_literal: true
 
 module OpenSearch::Sugar
-  # Base error class for ML model operations
-  class ModelError < Error; end
-
-  # Raised when a model cannot be found
-  class ModelNotFoundError < ModelError; end
-
-  # Raised when model registration fails
-  class ModelRegistrationError < ModelError; end
-
-  # Raised when model registration exceeds timeout
-  class ModelRegistrationTimeoutError < ModelRegistrationError; end
-
   # Manages OpenSearch ML (Machine Learning) models
   #
   # This class provides methods to register, deploy, list, and manage

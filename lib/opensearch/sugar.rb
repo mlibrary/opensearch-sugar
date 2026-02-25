@@ -22,6 +22,18 @@ module OpenSearch
     # Base error class for OpenSearch::Sugar exceptions
     class Error < StandardError; end
 
+    # Base error class for ML model operations
+    class ModelError < Error; end
+
+    # Raised when a model cannot be found
+    class ModelNotFoundError < ModelError; end
+
+    # Raised when model registration fails
+    class ModelRegistrationError < ModelError; end
+
+    # Raised when model registration exceeds timeout
+    class ModelRegistrationTimeoutError < ModelRegistrationError; end
+
     # Creates a new OpenSearch::Sugar::Client instance
     #
     # This is the primary entry point for creating a client connection to OpenSearch.
