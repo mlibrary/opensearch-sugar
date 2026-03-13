@@ -5,7 +5,13 @@ FROM ruby:3.4-slim AS base
 RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends \
   build-essential \
   git \
-  && rm -rf /var/lib/apt/lists/*
+  ripgrep \
+  libyaml-dev \
+  bat \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN echo 'alias less=/usr/bin/bat' >> /etc/bashrc
+RUN echo 'alias ll="ls -lhrt"' >> /etc/bashrc
 
 # Create non-root user
 ARG UNAME=app

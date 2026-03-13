@@ -1,0 +1,3 @@
+OPENSEARCH_USER="admin"
+OPENSEARCH_PASSWORD="Dw2F%3E*!m&psx64"
+OPENSEARCH_URL="http://localhost:9200"

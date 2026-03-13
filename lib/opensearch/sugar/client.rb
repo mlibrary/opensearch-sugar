@@ -231,15 +231,49 @@ module OpenSearch::Sugar
     # @param retries [Integer] Number of retries
     # @param kwargs [Hash] Additional arguments
     # @return [Hash] Connection arguments
+    # @raise [ArgumentError] If required credentials (host, user, password) are missing
     # @api private
     def build_connection_args(host:, user:, password:, timeout:, retries:, **kwargs)
+      # Start with defaults
       args = default_args.merge(kwargs)
-      args[:host] = host
+
+      # Override with explicitly provided values
+      args[:host] = host if host
       args[:user] = user if user
       args[:password] = password if password
       args[:request_timeout] = timeout
       args[:retry_on_failure] = retries
+
+      # Validate that we have all required connection parameters
+      # (either from user-provided values or from defaults/env vars)
+      validate_connection_args!(args)
+
       args
+    end
+
+    # Validates that required connection arguments are present and non-empty
+    #
+    # @param args [Hash] Connection arguments to validate
+    # @raise [ArgumentError] If host, user, or password is missing or empty
+    # @api private
+    def validate_connection_args!(args)
+      missing = []
+
+      if args[:host].nil? || args[:host].to_s.strip.empty?
+        missing << "host (provide via 'host:' parameter or OPENSEARCH_URL/OPENSEARCH_HOST env var)"
+      end
+
+      if args[:user].nil? || args[:user].to_s.strip.empty?
+        missing << "user (provide via 'user:' parameter or OPENSEARCH_USER env var)"
+      end
+
+      if args[:password].nil? || args[:password].to_s.strip.empty?
+        missing << "password (provide via 'password:' parameter or OPENSEARCH_PASSWORD/OPENSEARCH_INITIAL_ADMIN_PASSWORD env var)"
+      end
+
+      unless missing.empty?
+        raise ArgumentError, "Missing required connection parameter(s): #{missing.join("; ")}."
+      end
     end
 
     # Validates that a log level is valid

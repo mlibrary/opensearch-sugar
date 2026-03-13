@@ -842,7 +842,8 @@ jobs:
           docker compose up -d opensearch
           
       - name: Wait for OpenSearch
-        run: bundle exec ruby spec/docker/wait-for-opensearch.rb
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:9200/_cluster/health; do sleep 2; done'
       
       - name: Run integration tests
         run: bundle exec rspec --tag integration

@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: Dockerfile.opensearch
     container_name: opensearch-test
+
+    env_file:
+      - spec/env.spec
+
     environment:
       # Cluster configuration
       - cluster.name=opensearch-test
@@ -20,10 +24,10 @@ services:
       - bootstrap.memory_lock=true
 
       # Plugin settings
-      - plugins.security.disabled=true
+#      - plugins.security.disabled=true
 
-      # Credentials from env file
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-TestPassword123!}
+      # Credentials from env file (spec/env.spec)
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD}
 
     ulimits:
       memlock:
@@ -61,15 +65,11 @@ services:
 
     container_name: ruby-test
 
-    environment:
-      # OpenSearch connection settings
-      - OPENSEARCH_URL=http://opensearch:9200
-      - OPENSEARCH_HOST=http://opensearch:9200
-      - OPENSEARCH_USER=admin
-      - OPENSEARCH_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-TestPassword123!}
+    env_file:
+      - spec/env.spec
 
-      # Test environment
-      - RAILS_ENV=test
+    environment:
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD}
       - RACK_ENV=test
       - CI=${CI:-false}
 

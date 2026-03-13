@@ -1,4 +1,0 @@
-FROM opensearchproject/opensearch:latest AS opensearch
-
-RUN bin/opensearch-plugin install analysis-icu
-
