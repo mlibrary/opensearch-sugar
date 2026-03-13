@@ -94,27 +94,42 @@ Creates a new OpenSearch::Sugar::Client instance.
 - `host` (String) - OpenSearch host URL (default: `ENV['OPENSEARCH_URL']` or `ENV['OPENSEARCH_HOST']` or `'https://localhost:9000'`)
 - `user` (String) - Username (default: `ENV['OPENSEARCH_USER']` or `'admin'`)
 - `password` (String) - Password (default: `ENV['OPENSEARCH_PASSWORD']` or `ENV['OPENSEARCH_INITIAL_ADMIN_PASSWORD']`)
+- `logger` (Logger) - Logger instance for warnings and errors (default: `Logger.new($stdout, level: Logger::WARN)`)
 - `retry_on_failure` (Integer) - Number of retries (default: 5)
 - `request_timeout` (Integer) - Request timeout in seconds (default: 5)
 - `log` (Boolean) - Enable logging (default: true)
 - `trace` (Boolean) - Enable trace logging (default: false)
-- `transport_options` (Hash) - HTTP transport options including SSL settings
+- `transport_options` (Hash) - HTTP transport options including SSL settings (default: `{ssl: {verify: true}}`)
 - `**kwargs` (Hash) - Additional options passed to OpenSearch::Client
 
 **Returns:**
 - (OpenSearch::Sugar::Client) - A new client instance
 
+**Security Note:** SSL verification is **enabled by default** (`verify: true`). Only disable for local development.
+
 **Example:**
 ```ruby
+# With SSL verification (default, recommended)
 client = OpenSearch::Sugar::Client.new(
   host: 'https://search.example.com:9200',
   user: 'myuser',
   password: 'secret',
   retry_on_failure: 3,
   request_timeout: 10,
-  log: false,
+  log: false
+)
+
+# With custom logger
+require 'logger'
+client = OpenSearch::Sugar::Client.new(
+  logger: Logger.new('opensearch.log', level: Logger::INFO)
+)
+
+# Development only - disable SSL verification
+client = OpenSearch::Sugar::Client.new(
+  host: 'https://localhost:9200',
   transport_options: {
-    ssl: { verify: true }
+    ssl: { verify: false }  # Only for development!
   }
 )
 ```
@@ -143,6 +158,18 @@ response = raw.cluster.health
 ```ruby
 models = client.models
 models.list
+```
+
+#### `#logger`
+
+**Type:** Logger (readonly)
+
+**Description:** The logger instance used for warnings and errors.
+
+**Example:**
+```ruby
+client.logger.info "Custom log message"
+client.logger.level = Logger::DEBUG
 ```
 
 ### Instance Methods
@@ -248,32 +275,35 @@ index = client.open_or_create('my_index')
 Updates settings for an index. Automatically closes and reopens the index.
 
 **Parameters:**
-- `settings` (Hash) - The settings hash (can include `metadata` key)
+- `settings` (Hash) - The settings hash
 - `index_name` (String) - The name of the index to update
 
 **Returns:**
-- (Hash) - Result hash with `:status`, `:message`, and `:metadata` keys
+- (void)
+
+**Raises:**
+- (OpenSearch::Transport::Transport::Error) - If the settings update fails
 
 **Example:**
 ```ruby
-result = client.update_settings(
-  {
-    settings: {
-      analysis: {
-        analyzer: {
-          my_analyzer: {
-            type: 'standard',
-            stopwords: ['the', 'a']
-          }
+settings = {
+  settings: {
+    analysis: {
+      analyzer: {
+        my_analyzer: {
+          type: 'standard',
+          stopwords: ['the', 'a']
         }
       }
     }
-  },
-  'my_index'
-)
+  }
+}
 
-if result[:status] == 'success'
-  puts result[:message]
+begin
+  client.update_settings(settings, 'my_index')
+  puts "Settings updated successfully"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
 end
 ```
 
@@ -282,25 +312,32 @@ end
 Updates mappings for an index. Automatically closes and reopens the index.
 
 **Parameters:**
-- `mappings` (Hash) - The mappings hash (can include `metadata` key)
+- `mappings` (Hash) - The mappings hash
 - `index_name` (String) - The name of the index to update
 
 **Returns:**
-- (Hash) - Result hash with `:status`, `:message`, and `:metadata` keys
+- (void)
+
+**Raises:**
+- (OpenSearch::Transport::Transport::Error) - If the mappings update fails
 
 **Example:**
 ```ruby
-result = client.update_mappings(
-  {
-    mappings: {
-      properties: {
-        title: { type: 'text' },
-        created_at: { type: 'date' }
-      }
+mappings = {
+  mappings: {
+    properties: {
+      title: { type: 'text' },
+      created_at: { type: 'date' }
     }
-  },
-  'my_index'
-)
+  }
+}
+
+begin
+  client.update_mappings(mappings, 'my_index')
+  puts "Mappings updated successfully"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 ### Delegated Methods
@@ -418,16 +455,24 @@ Updates the settings for this index.
 - `settings` (Hash) - The settings to apply
 
 **Returns:**
-- (Hash) - Result hash with `:status` and `:message`
+- (void)
+
+**Raises:**
+- (OpenSearch::Transport::Transport::Error) - If the settings update fails
 
 **Example:**
 ```ruby
-result = index.update_settings(
-  settings: {
-    number_of_replicas: 2,
-    refresh_interval: '5s'
-  }
-)
+begin
+  index.update_settings(
+    settings: {
+      number_of_replicas: 2,
+      refresh_interval: '5s'
+    }
+  )
+  puts "Settings updated"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 #### `#mappings`
@@ -451,18 +496,26 @@ Updates the mappings for this index.
 - `mappings` (Hash) - The mappings to apply
 
 **Returns:**
-- (Hash) - Result hash with `:status` and `:message`
+- (void)
+
+**Raises:**
+- (OpenSearch::Transport::Transport::Error) - If the mappings update fails
 
 **Example:**
 ```ruby
-result = index.update_mappings(
-  mappings: {
-    properties: {
-      title: { type: 'text' },
-      tags: { type: 'keyword' }
+begin
+  index.update_mappings(
+    mappings: {
+      properties: {
+        title: { type: 'text' },
+        tags: { type: 'keyword' }
+      }
     }
-  }
-)
+  )
+  puts "Mappings updated"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 #### `#count`

@@ -4,6 +4,7 @@ module OpenSearch::Sugar
 
     def initialize(os)
       @os = os
+      @logger = os.logger
     end
 
     def register(name:, version:, format: "TORCH_SCRIPT")
@@ -20,7 +21,7 @@ module OpenSearch::Sugar
       taskid = resp["task_id"]
       while true
         model_install_response = @os.http.get("_plugins/_ml/tasks/#{taskid}")
-        pp model_install_response
+        @logger.debug "Model installation status: #{model_install_response}"
         break if model_install_response["state"] == "COMPLETED"
         raise model_install_response["error"].to_s if model_install_response["state"] == "FAILED"
         sleep(5)

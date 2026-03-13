@@ -76,6 +76,31 @@ client = OpenSearch::Sugar.new(
 
 **Warning:** Only use this in development! Production should use proper SSL.
 
+**Note:** SSL verification is **enabled by default** for security. You must explicitly disable it as shown above for local development.
+
+### How to Configure Logging
+
+```ruby
+# Use a custom logger
+require 'logger'
+my_logger = Logger.new('opensearch.log', level: Logger::INFO)
+
+client = OpenSearch::Sugar.new(
+  logger: my_logger
+)
+
+# Use default logger (writes to $stdout at WARN level)
+client = OpenSearch::Sugar.new  # Logger.new($stdout, level: Logger::WARN)
+
+# Disable logging by setting level to FATAL
+require 'logger'
+silent_logger = Logger.new($stdout, level: Logger::FATAL)
+
+client = OpenSearch::Sugar.new(
+  logger: silent_logger
+)
+```
+
 ### How to Set Cluster Log Level
 
 ```ruby
@@ -459,14 +484,19 @@ settings = {
   }
 }
 
-result = index.update_settings(settings)
-puts result[:message]
+begin
+  index.update_settings(settings)
+  puts "Settings updated successfully"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 **The gem automatically:**
 - Closes the index before updating
 - Applies the settings
 - Reopens the index
+- Re-raises any errors after attempting to reopen the index
 
 ### How to Get Index Settings
 
@@ -494,8 +524,12 @@ mappings = {
   }
 }
 
-result = index.update_mappings(mappings)
-puts result[:message]
+begin
+  index.update_mappings(mappings)
+  puts "Mappings updated successfully"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 ### How to Get Index Mappings
@@ -532,7 +566,12 @@ settings = {
   }
 }
 
-index.update_settings(settings)
+begin
+  index.update_settings(settings)
+  puts "Custom analyzer created"
+rescue OpenSearch::Transport::Transport::Error => e
+  puts "Error: #{e.message}"
+end
 ```
 
 ---

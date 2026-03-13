@@ -254,9 +254,34 @@ client = OpenSearch::Sugar.new(
   request_timeout: 10,
   log: false,
   transport_options: {
-    ssl: { verify: true }
+    ssl: { verify: true }  # Default - SSL verification is enabled
   }
 )
+
+# For development only - disable SSL verification
+client = OpenSearch::Sugar.new(
+  host: 'https://localhost:9200',
+  transport_options: {
+    ssl: { verify: false }  # Only for development!
+  }
+)
+```
+
+**Important:** SSL verification is **enabled by default** for security. Only disable it explicitly for local development.
+
+### How to Configure Logging
+
+```ruby
+# Use custom logger
+require 'logger'
+my_logger = Logger.new('opensearch.log', level: Logger::INFO)
+
+client = OpenSearch::Sugar.new(
+  logger: my_logger
+)
+
+# Default logger writes to $stdout with WARN level
+client = OpenSearch::Sugar.new  # Uses Logger.new($stdout, level: Logger::WARN)
 ```
 
 ## API Reference
@@ -343,7 +368,8 @@ Default values:
 - **Request timeout**: `5` seconds
 - **Log**: `true`
 - **Trace**: `false`
-- **SSL verification**: `false` (disable for development)
+- **SSL verification**: `true` (enabled by default for security)
+- **Logger**: `Logger.new($stdout, level: Logger::WARN)`
 
 ## Understanding OpenSearch::Sugar (Explanation)
 

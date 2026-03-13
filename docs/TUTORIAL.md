@@ -149,8 +149,8 @@ settings = {
   }
 }
 
-result = index.update_settings(settings)
-puts "Settings updated: #{result[:message]}"
+index.update_settings(settings)
+puts "Settings updated successfully"
 ```
 
 **What's happening here?**
@@ -203,8 +203,8 @@ mappings = {
   }
 }
 
-result = index.update_mappings(mappings)
-puts "Mappings updated: #{result[:message]}"
+index.update_mappings(mappings)
+puts "Mappings updated successfully"
 ```
 
 ## Step 6: Test Your Analyzer
@@ -471,9 +471,15 @@ index.delete!
 - Make sure OpenSearch is running: `docker ps`
 - Check the URL in your `.env` file
 
-**SSL certificate errors?**
-- The default settings disable SSL verification for development
-- For production, enable proper SSL verification
+**SSL certificate errors with self-signed certificates?**
+- SSL verification is **enabled by default** for security
+- For local development with self-signed certificates, you can disable it:
+  ```ruby
+  client = OpenSearch::Sugar.new(
+    transport_options: { ssl: { verify: false } }
+  )
+  ```
+- For production, use proper SSL certificates
 
 **Index already exists?**
 - Delete it first: `client.indices.delete(index: 'books')`

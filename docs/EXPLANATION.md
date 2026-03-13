@@ -558,10 +558,12 @@ Filters don't calculate relevance scores and can be cached.
 
 **Development:**
 ```ruby
+# SSL verification is enabled by default
+# For local development with self-signed certificates, explicitly disable:
 client = OpenSearch::Sugar.new(
   host: 'https://localhost:9200',
   transport_options: {
-    ssl: { verify: false }  # OK for dev
+    ssl: { verify: false }  # Only for development!
   }
 )
 ```
@@ -574,18 +576,40 @@ client = OpenSearch::Sugar.new(
   password: ENV['OPENSEARCH_PASSWORD'],
   transport_options: {
     ssl: {
-      verify: true,
+      verify: true,  # Default - SSL verification enabled
       ca_file: '/path/to/ca.pem'
     }
   }
 )
 ```
 
-**Never:**
-- Hardcode credentials in source code
-- Disable SSL verification in production
-- Use default passwords
-- Expose OpenSearch directly to the internet
+**Security Best Practices:**
+- SSL verification is **enabled by default** for security
+- Never hardcode credentials in source code
+- Never disable SSL verification in production
+- Use strong, unique passwords
+- Don't expose OpenSearch directly to the internet
+
+### Logging
+
+Configure logging behavior to suit your needs:
+
+```ruby
+# Use a custom logger
+require 'logger'
+file_logger = Logger.new('opensearch.log', level: Logger::INFO)
+
+client = OpenSearch::Sugar.new(
+  logger: file_logger
+)
+
+# Default: Logger writes to $stdout at WARN level
+client = OpenSearch::Sugar.new  # Uses Logger.new($stdout, level: Logger::WARN)
+
+# Silent mode (only FATAL errors)
+silent_logger = Logger.new($stdout, level: Logger::FATAL)
+client = OpenSearch::Sugar.new(logger: silent_logger)
+```
 
 ### Environment Variables
 

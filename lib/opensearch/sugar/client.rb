@@ -4,6 +4,7 @@ require "delegate"
 require "opensearch-ruby"
 require_relative "models"
 require "httpx/adapters/faraday"
+require "logger"
 
 module OpenSearch::Sugar
   class Client < SimpleDelegator
@@ -16,14 +17,18 @@ module OpenSearch::Sugar
       ::OpenSearch::Client.new(*args, **kwargs)
     end
 
-    attr_reader :raw_client, :models
+    attr_reader :raw_client, :models, :logger
     # Creates a new OpenSearch::Sugar::Client instance
     #
     # @param host [String] The OpenSearch host to connect to
+    # @param logger [Logger] Logger instance for warnings and errors (default: Logger to $stdout)
     # @param kwargs [Hash] Additional arguments to pass to the OpenSearch::Client constructor
     # @return [OpenSearch::Sugar::Client] A new client instance
     # @see [OpenSearch::Client]
-    def initialize(host: ENV["OPENSEARCH_URL"] || ENV["OPENSEARCH_HOST"] || "https://localhost:9000", **kwargs)
+    # @note SSL verification is enabled by default. To disable for development:
+    #   `OpenSearch::Sugar.new(transport_options: {ssl: {verify: false}})`
+    def initialize(host: ENV["OPENSEARCH_URL"] || ENV["OPENSEARCH_HOST"] || "https://localhost:9000", logger: nil, **kwargs)
+      @logger = logger || Logger.new($stdout, level: Logger::WARN)
       kwargs[:host] = host
       args = default_args.merge(kwargs)
       @raw_client = self.class.raw_client(**args)
@@ -34,6 +39,8 @@ module OpenSearch::Sugar
     # Returns the default arguments for the OpenSearch client
     #
     # @return [Hash] The default connection arguments
+    # @note SSL verification is enabled by default for security. To disable (development only),
+    #   pass `transport_options: {ssl: {verify: false}}` to the initializer.
     def default_args
       {
         user: ENV["OPENSEARCH_USER"] || "admin",
@@ -43,7 +50,7 @@ module OpenSearch::Sugar
         request_timeout: 5,
         log: true,
         trace: false,
-        transport_options: {ssl: {verify: false}}
+        transport_options: {ssl: {verify: true}}
       }
     end
 
@@ -88,7 +95,8 @@ module OpenSearch::Sugar
     #
     # @param settings [Hash] The settings to upload
     # @param index_name [String] The name of the index to update
-    # @return [Hash] A result hash with status, message, and metadata
+    # @return [void]
+    # @raise [OpenSearch::Transport::Transport::Error] If the settings update fails
     # @example
     #   settings = {
     #     settings: {
@@ -100,17 +108,14 @@ module OpenSearch::Sugar
     #           }
     #         }
     #       }
-    #     },
-    #     metadata: {
-    #       description: "Custom analyzer settings"
     #     }
     #   }
     #
-    #   result = client.update_settings(settings, index: "my_index")
-    #   if result[:status] == "success"
-    #     puts "Settings updated: #{result[:message]}"
-    #   else
-    #     puts "Error: #{result[:message]}"
+    #   begin
+    #     client.update_settings(settings, "my_index")
+    #     puts "Settings updated successfully"
+    #   rescue OpenSearch::Transport::Transport::Error => e
+    #     puts "Error: #{e.message}"
     #   end
     def update_settings(settings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
@@ -119,24 +124,14 @@ module OpenSearch::Sugar
       else
         settings
       end
+      
       indices.close(index: index_name)
       indices.put_settings(index: index_name, body: opensearch_settings)
       indices.open(index: index_name)
-
-      {
-        status: "success",
-        message: "Updated settings for index #{index_name}",
-        metadata: settings[:metadata]
-      }
-    rescue => e
+    rescue OpenSearch::Transport::Transport::Error
       # Try to reopen the index if it's closed
       reopen_index(index_name)
-
-      {
-        status: "error",
-        message: "Failed to update settings: #{e.message}",
-        backtrace: e.backtrace
-      }
+      raise
     end
 
     # Uploads mappings to an OpenSearch index
@@ -148,7 +143,8 @@ module OpenSearch::Sugar
     #
     # @param mappings [Hash] The mappings to upload
     # @param index_name [String] The name of the index to update
-    # @return [Hash] A result hash with status, message, and metadata
+    # @return [void]
+    # @raise [OpenSearch::Transport::Transport::Error] If the mappings update fails
     # @example
     #   mappings = {
     #     mappings: {
@@ -157,17 +153,14 @@ module OpenSearch::Sugar
     #         description: { type: "text" },
     #         created_at: { type: "date" }
     #       }
-    #     },
-    #     metadata: {
-    #       description: "Basic document mappings"
     #     }
     #   }
     #
-    #   result = client.update_mappings(mappings, "my_index")
-    #   if result[:status] == "success"
-    #     puts "Mappings updated: #{result[:message]}"
-    #   else
-    #     puts "Error: #{result[:message]}"
+    #   begin
+    #     client.update_mappings(mappings, "my_index")
+    #     puts "Mappings updated successfully"
+    #   rescue OpenSearch::Transport::Transport::Error => e
+    #     puts "Error: #{e.message}"
     #   end
     def update_mappings(mappings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
@@ -176,23 +169,14 @@ module OpenSearch::Sugar
       else
         mappings
       end
+      
       indices.close(index: index_name)
       indices.put_mapping(index: index_name, body: opensearch_mappings)
       indices.open(index: index_name)
-
-      {
-        status: "success",
-        message: "Updated mappings for index #{index_name}",
-        metadata: mappings[:metadata]
-      }
-    rescue => e
+    rescue OpenSearch::Transport::Transport::Error
       # Try to reopen the index if it's closed
       reopen_index(index_name)
-      {
-        status: "error",
-        message: "Failed to update mappings: #{e.message}",
-        backtrace: e.backtrace
-      }
+      raise
     end
 
     private
@@ -205,9 +189,9 @@ module OpenSearch::Sugar
       if indices.status(index: index_name).dig("indices", index_name, "state") == "close"
         indices.open(index: index_name)
       end
-    rescue => open_error
-      # Just log the error without raising
-      puts "Warning: Failed to reopen index #{index_name}: #{open_error.message}"
+    rescue OpenSearch::Transport::Transport::Error => open_error
+      # Log the error without raising
+      logger.warn "Failed to reopen index #{index_name}: #{open_error.message}"
     end
   end
 end
