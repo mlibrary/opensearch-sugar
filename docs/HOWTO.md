@@ -633,6 +633,7 @@ client.indices.update_aliases(
 ```ruby
 models = client.models
 
+# Basic registration (5-minute default timeout)
 model = models.register(
   name: 'huggingface/sentence-transformers/all-MiniLM-L12-v2',
   version: '1.0.1',
@@ -640,9 +641,17 @@ model = models.register(
 )
 
 puts "Model deployed: #{model.name}"
+
+# With custom timeout for large models
+model = models.register(
+  name: 'huggingface/large-model',
+  version: '2.0.0',
+  timeout: 600,         # 10 minutes
+  poll_interval: 10     # Check every 10 seconds
+)
 ```
 
-**Note:** Registration includes deployment. The method waits for deployment to complete.
+**Note:** Registration includes deployment. The method waits for deployment to complete or raises an exception if it fails or times out.
 
 ### How to List All Models
 
@@ -660,15 +669,21 @@ end
 ```ruby
 models = client.models
 
-# By exact name
-model = models['all-MiniLM-L12-v2']
+# By exact name (recommended)
+model = models.find_by_name('huggingface/sentence-transformers/all-MiniLM-L12-v2')
 
-# By ID
-model = models['abc123']
+# By exact ID
+model = models.find_by_id('abc123')
 
-# By partial name (case-insensitive regex)
-model = models['minilm']  # Finds latest version
+# Search by partial name (case-insensitive, returns array)
+matching_models = models.search('minilm')  # Finds all MiniLM models
+latest_model = matching_models.first  # Get the latest version
+
+# Legacy bracket notation (deprecated but still works)
+model = models['all-MiniLM-L12-v2']  # Use explicit methods instead
 ```
+
+**Best Practice:** Use `find_by_name` or `find_by_id` for explicit lookups, and `search` when you need fuzzy matching.
 
 ### How to Create an Embedding Pipeline
 

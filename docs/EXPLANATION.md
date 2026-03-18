@@ -403,7 +403,8 @@ OpenSearch::Sugar simplifies the ML workflow:
 # 1. Register and deploy a model
 model = client.models.register(
   name: 'huggingface/sentence-transformers/all-MiniLM-L12-v2',
-  version: '1.0.1'
+  version: '1.0.1',
+  timeout: 300  # Optional: adjust for large models
 )
 
 # 2. Create an ingest pipeline
@@ -441,16 +442,23 @@ results = client.search(
 
 ML models in OpenSearch:
 - Must be registered before use
-- Take time to deploy
+- Take time to deploy (potentially minutes for large models)
 - Have specific format requirements
 - Need to be undeployed before deletion
 
 OpenSearch::Sugar handles these complexities:
 
 ```ruby
-# Simple interface
-model = models.register(...)  # Waits for deployment
+# Simple interface with safety
+model = models.register(...)  # Waits for deployment with timeout
 models.delete!(model)         # Undeploys first, then deletes
+
+# Handle timeouts gracefully
+begin
+  model = models.register(name: 'large-model', version: '1.0', timeout: 600)
+rescue OpenSearch::Sugar::Models::TimeoutError => e
+  puts "Deployment is taking longer than expected, check cluster load"
+end
 ```
 
 ---

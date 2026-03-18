@@ -695,7 +695,7 @@ Creates a new Models instance.
 
 **Note:** Typically accessed via `client.models`, not instantiated directly.
 
-#### `#register(name:, version:, format: 'TORCH_SCRIPT')` / `#deploy(...)`
+#### `#register(name:, version:, format: 'TORCH_SCRIPT', timeout: 300, poll_interval: 5)` / `#deploy(...)`
 
 Registers and deploys a machine learning model. Waits for deployment to complete.
 
@@ -703,16 +703,33 @@ Registers and deploys a machine learning model. Waits for deployment to complete
 - `name` (String) - Full model name (e.g., `'huggingface/sentence-transformers/all-MiniLM-L12-v2'`)
 - `version` (String) - Model version
 - `format` (String) - Model format (default: `'TORCH_SCRIPT'`)
+- `timeout` (Integer) - Maximum time to wait for deployment in seconds (default: `300`)
+- `poll_interval` (Integer) - Time between polling attempts in seconds (default: `5`)
 
 **Returns:**
 - (ML_INFO) - Model information struct, or existing model if already registered
 
+**Raises:**
+- (OpenSearch::Sugar::Models::ModelDeploymentError) - If deployment fails
+- (OpenSearch::Sugar::Models::TimeoutError) - If deployment exceeds timeout
+
+**See:** [OpenSearch Register Model API](https://opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/register-model/)
+
 **Example:**
 ```ruby
+# With defaults (5-minute timeout)
 model = client.models.register(
   name: 'huggingface/sentence-transformers/all-MiniLM-L12-v2',
   version: '1.0.1',
   format: 'TORCH_SCRIPT'
+)
+
+# With custom timeout (10 minutes)
+model = client.models.register(
+  name: 'huggingface/large-model',
+  version: '2.0.0',
+  timeout: 600,
+  poll_interval: 10
 )
 
 puts "Deployed: #{model.name} v#{model.version}"
@@ -733,34 +750,7 @@ models.each do |model|
 end
 ```
 
-#### `#[](id_or_fullname_or_nickname)`
-
-Finds a model by ID, exact name, or partial name match.
-
-**Parameters:**
-- `id_or_fullname_or_nickname` (String) - Model identifier
-
-**Returns:**
-- (ML_INFO, nil) - Model information or nil if not found
-
-**Behavior:**
-1. Tries exact name match first
-2. Then tries ID match
-3. Finally tries case-insensitive regex match on name, returning latest version
-
-**Example:**
-```ruby
-# By exact name
-model = client.models['huggingface/sentence-transformers/all-MiniLM-L12-v2']
-
-# By ID
-model = client.models['abc123']
-
-# By nickname (case-insensitive, partial match)
-model = client.models['minilm']  # Finds latest MiniLM model
-```
-
-#### `#raw_list`
+#### `#[](id_or_fullname_or_nickname)` ⚠️ Deprecated
 
 Returns the raw OpenSearch response for model listing.
 
@@ -783,6 +773,11 @@ Undeploys a model by name or ID.
 **Returns:**
 - (Hash) - OpenSearch response
 
+**Raises:**
+- (OpenSearch::Sugar::Models::ModelNotFoundError) - If model not found
+
+**See:** [OpenSearch Undeploy Model API](https://opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/undeploy-model/)
+
 **Example:**
 ```ruby
 client.models.undeploy!('all-MiniLM-L12-v2')
@@ -797,6 +792,11 @@ Deletes a model by name or ID. Automatically undeploys first.
 
 **Returns:**
 - (Hash) - OpenSearch response
+
+**Raises:**
+- (OpenSearch::Sugar::Models::ModelNotFoundError) - If model not found
+
+**See:** [OpenSearch Delete Model API](https://opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/delete-model/)
 
 **Example:**
 ```ruby
@@ -855,6 +855,91 @@ begin
   # Operation that might fail
 rescue OpenSearch::Sugar::Error => e
   puts "OpenSearch::Sugar error: #{e.message}"
+end
+```
+
+### `OpenSearch::Sugar::Models::ModelError`
+
+Base error class for all model-related errors.
+
+**Inherits:** OpenSearch::Sugar::Error
+
+**Example:**
+```ruby
+begin
+  client.models.register(name: 'invalid', version: '1.0')
+rescue OpenSearch::Sugar::Models::ModelError => e
+  puts "Model error: #{e.message}"
+end
+```
+
+### `OpenSearch::Sugar::Models::ModelDeploymentError`
+
+Raised when model deployment fails.
+
+**Inherits:** OpenSearch::Sugar::Models::ModelError
+
+**Common causes:**
+- Invalid model name or version
+- Insufficient cluster resources
+- Network connectivity issues
+- Model format incompatibility
+
+**Example:**
+```ruby
+begin
+  model = client.models.register(
+    name: 'invalid/model',
+    version: '1.0.0'
+  )
+rescue OpenSearch::Sugar::Models::ModelDeploymentError => e
+  puts "Deployment failed: #{e.message}"
+end
+```
+
+### `OpenSearch::Sugar::Models::ModelNotFoundError`
+
+Raised when attempting to operate on a model that doesn't exist.
+
+**Inherits:** OpenSearch::Sugar::Models::ModelError
+
+**Common causes:**
+- Model was never registered
+- Model was deleted
+- Typo in model name or ID
+
+**Example:**
+```ruby
+begin
+  client.models.undeploy!('nonexistent_model')
+rescue OpenSearch::Sugar::Models::ModelNotFoundError => e
+  puts "Model not found: #{e.message}"
+end
+```
+
+### `OpenSearch::Sugar::Models::TimeoutError`
+
+Raised when model deployment exceeds the specified timeout.
+
+**Inherits:** OpenSearch::Sugar::Models::ModelError
+
+**Common causes:**
+- Model is too large for available resources
+- Slow network connection
+- Cluster is under heavy load
+- Timeout value too short
+
+**Example:**
+```ruby
+begin
+  model = client.models.register(
+    name: 'huggingface/large-model',
+    version: '1.0.0',
+    timeout: 60  # Only 1 minute - might be too short
+  )
+rescue OpenSearch::Sugar::Models::TimeoutError => e
+  puts "Deployment timed out: #{e.message}"
+  # Consider retrying with longer timeout
 end
 ```
 

@@ -2,6 +2,7 @@
 
 module OpenSearch
   module Sugar
+    class Error < StandardError; end
   end
 end
 
@@ -13,7 +14,6 @@ require_relative "sugar/client"
 
 module OpenSearch
   module Sugar
-    class Error < StandardError; end
 
     def self.client(**kwargs)
       OpenSearch::Sugar::Client.new(**kwargs)

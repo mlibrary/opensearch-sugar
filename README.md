@@ -201,17 +201,23 @@ OpenSearch::Sugar provides convenient methods for managing machine learning mode
 # Access the models interface
 models = client.models
 
-# Register and deploy a model
+# Register and deploy a model (with optional timeout)
 model = models.register(
   name: 'huggingface/sentence-transformers/all-MiniLM-L12-v2',
   version: '1.0.1',
-  format: 'TORCH_SCRIPT'
+  format: 'TORCH_SCRIPT',
+  timeout: 300  # Optional: default is 300 seconds (5 minutes)
 )
 
 # List all models
 all_models = models.list
 
-# Get a specific model by name, ID, or nickname
+# Find a specific model
+model = models.find_by_name('huggingface/sentence-transformers/all-MiniLM-L12-v2')
+model = models.find_by_id('abc123')
+matching = models.search('minilm')  # Returns array of matches
+
+# Legacy bracket notation (still works but deprecated)
 model = models['all-MiniLM-L12-v2']
 
 # Create an ingest pipeline with a model
