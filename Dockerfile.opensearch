@@ -1,4 +1,5 @@
 FROM opensearchproject/opensearch:latest AS opensearch
 
+RUN bin/opensearch-plugin remove analysis-icu
 RUN bin/opensearch-plugin install analysis-icu
 

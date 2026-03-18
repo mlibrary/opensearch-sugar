@@ -1,21 +1,22 @@
 include:
   - compose_opensearch.yml
 services:
-  app:
+  ruby:
     build:
       context: .
       target: ruby
     platform: linux/aarch64
     volumes:
-      - ../..:/app
+      - .:/app
       - gem_cache:/gems
     environment:
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
     env_file:
-      - env.development
-      - .env
-    command: "tail -f /dev/null"
+      - env.test
+    command: bash -c "bundle lock --add-platform aarch64-linux && bundle install && tail -f /dev/null"
     extra_hosts:
       - host.docker.internal:host-gateway
+    networks:
+      - opensearch-net # All of the containers will join the same Docker bridge network
 volumes:
   gem_cache:
