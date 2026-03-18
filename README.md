@@ -2,6 +2,8 @@
 
 A little syntactic sugar on top of the official OpenSearch ruby gem.
 
+**Note:** The environment variable for specifying the OpenSearch host is now `OPENSEARCH_HOST` (previously `OPENSEARCH_URL`). Update your environment and scripts accordingly.
+
 
 
 ## Contributing

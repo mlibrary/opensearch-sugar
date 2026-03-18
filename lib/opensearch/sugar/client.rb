@@ -23,7 +23,7 @@ module OpenSearch::Sugar
     # @param kwargs [Hash] Additional arguments to pass to the OpenSearch::Client constructor
     # @return [OpenSearch::Sugar::Client] A new client instance
     # @see [OpenSearch::Client]
-    def initialize(host: ENV["OPENSEARCH_URL"] || ENV["OPENSEARCH_HOST"] || "https://localhost:9000", **kwargs)
+    def initialize(host: ENV["OPENSEARCH_HOST"] || "https://localhost:9000", **kwargs)
       kwargs[:host] = host
       args = default_args.merge(kwargs)
       @raw_client = self.class.raw_client(**args)
@@ -38,7 +38,7 @@ module OpenSearch::Sugar
       {
         user: ENV["OPENSEARCH_USER"] || "admin",
         password: ENV["OPENSEARCH_PASSWORD"] || ENV["OPENSEARCH_INITIAL_ADMIN_PASSWORD"],
-        host: ENV["OPENSEARCH_URL"] || "https://localhost:9000",
+        host: ENV["OPENSEARCH_HOST"] || "https://localhost:9000",
         retry_on_failure: 5,
         request_timeout: 5,
         log: true,
