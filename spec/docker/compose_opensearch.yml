@@ -5,12 +5,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.opensearch
+    env_file:
+      - ../env.testing
     environment:
       - cluster.name=opensearch # Name the cluster
       - node.name=opensearch-node # Name the node that will run in this container
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
       - discovery.type=single-node
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD:-admin}
+      - OPENSEARCH_USERNAME=${OPENSEARCH_USER:-admin}
     ulimits:
       memlock:
         soft: -1 # Set memlock to unlimited (no soft or hard limit)
@@ -18,16 +21,14 @@ services:
       nofile:
         soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
         hard: 65536
-    volumes:
-      - opensearch-data1:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container
+    tmpfs:
+      - /usr/share/opensearch/data # Use tmpfs so no data is persisted between runs
     ports:
       - 9200:9200 # REST API
       - 9600:9600 # Performance Analyzer
     networks:
       - opensearch-net # All of the containers will join the same Docker bridge network
-volumes:
-  opensearch-data1:
-  opensearch-data2:
+
 
 networks:
   opensearch-net:

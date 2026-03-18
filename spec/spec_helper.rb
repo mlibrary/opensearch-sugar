@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "dotenv"
+Dotenv.load(File.expand_path("env.testing", __dir__))
+
 require "opensearch/sugar"
 
 RSpec.configure do |config|

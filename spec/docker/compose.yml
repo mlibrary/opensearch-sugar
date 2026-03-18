@@ -9,10 +9,9 @@ services:
     volumes:
       - ../..:/app
       - gem_cache:/gems
-    environment:
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin
+    # environment variables are set via env.testing
     env_file:
-      - env.development
+      - env.testing
       - .env
     command: "tail -f /dev/null"
     extra_hosts:
