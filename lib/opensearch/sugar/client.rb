@@ -39,10 +39,10 @@ module OpenSearch::Sugar
         user: ENV["OPENSEARCH_USER"] || "admin",
         password: ENV["OPENSEARCH_PASSWORD"] || ENV["OPENSEARCH_INITIAL_ADMIN_PASSWORD"],
         host: ENV["OPENSEARCH_HOST"] || "https://localhost:9000",
-        retry_on_failure: 5,
-        request_timeout: 5,
-        log: true,
-        trace: false,
+        retry_on_failure: ENV.fetch("OPENSEARCH_RETRY_COUNT", "5").to_i,
+        request_timeout: ENV.fetch("OPENSEARCH_TIMEOUT", "5").to_i,
+        log: ENV.fetch("OPENSEARCH_LOG", "false") == "true",
+        trace: ENV.fetch("OPENSEARCH_TRACE", "false") == "true",
         transport_options: {ssl: {verify: false}}
       }
     end
@@ -57,26 +57,20 @@ module OpenSearch::Sugar
     #
     # @param name [String] The name of the index to check
     # @return [Boolean] True if the index exists, false otherwise
-    def has_index?(name)
-      indices.exists?(index: name)
-    end
+    def has_index?(name) = indices.exists?(index: name)
 
-    def index_names
-      cluster.state["metadata"]["indices"].keys
-    end
+    def index_names = cluster.state["metadata"]["indices"].keys
 
     # Retrieves an index by name
     #
     # @param index_name [String] The name of the index to retrieve
     # @return [OpenSearch::Sugar::Index] The index instance
-    def [](index_name)
-      Index.open(client: self, name: index_name)
-    end
+    def [](index_name) = Index.open(client: self, name: index_name)
 
-    def open_or_create(index_name)
+    def open_or_create(index_name, **kwargs)
       Index.open(client: self, name: index_name)
     rescue ArgumentError
-      Index.create(client: self, name: index_name)
+      Index.create(client: self, name: index_name, **kwargs)
     end
 
     # Uploads settings to an OpenSearch index
@@ -114,11 +108,8 @@ module OpenSearch::Sugar
     #   end
     def update_settings(settings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
-      opensearch_settings = if settings.keys.map(&:to_s) == ["settings"]
-        settings.values.first
-      else
-        settings
-      end
+      opensearch_settings = settings.keys.map(&:to_s) == ["settings"] ? settings.values.first : settings
+      
       indices.close(index: index_name)
       indices.put_settings(index: index_name, body: opensearch_settings)
       indices.open(index: index_name)
@@ -171,11 +162,8 @@ module OpenSearch::Sugar
     #   end
     def update_mappings(mappings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
-      opensearch_mappings = if mappings.keys.map(&:to_s) == ["mappings"]
-        mappings.values.first
-      else
-        mappings
-      end
+      opensearch_mappings = mappings.keys.map(&:to_s) == ["mappings"] ? mappings.values.first : mappings
+      
       indices.close(index: index_name)
       indices.put_mapping(index: index_name, body: opensearch_mappings)
       indices.open(index: index_name)

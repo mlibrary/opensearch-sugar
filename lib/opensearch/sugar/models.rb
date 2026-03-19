@@ -8,8 +8,8 @@ module OpenSearch::Sugar
 
     def register(name:, version:, format: "TORCH_SCRIPT")
       config = {
-        name: name,
-        version: version,
+        name:,
+        version:,
         model_format: format
       }
 
@@ -18,7 +18,7 @@ module OpenSearch::Sugar
 
       resp = @os.http.post("/_plugins/_ml/models/_register?deploy=true", body: config)
       taskid = resp["task_id"]
-      while true
+      loop do
         model_install_response = @os.http.get("_plugins/_ml/tasks/#{taskid}")
         pp model_install_response
         break if model_install_response["state"] == "COMPLETED"
@@ -28,7 +28,7 @@ module OpenSearch::Sugar
       self[name]
     end
 
-    alias_method :deploy, :register
+    def deploy(...) = register(...)
 
     # Get info about the latest version of a model by name, id, or partial name
     # @todo make sure models are unique by nickname if nickname is found
@@ -43,18 +43,17 @@ module OpenSearch::Sugar
       return id if id
 
       nickname_pattern = Regexp.new(id_or_fullname_or_nickname, "i")
-      nicks = mlm.find_all { |m| nickname_pattern.match(m.name) }.sort { |a, b| b.version <=> a.version }
+      nicks = mlm.select { |m| nickname_pattern.match(m.name) }.sort_by { |m| -m.version }
       nicks.first # could be nil
     end
 
     # Get a list of ML models and their versions and internal identifiers
     # @return [Array<ML_INFO>] Array of name/version/id triples as ML_INFO structs
     def list
-      lst = raw_list.dig("hits", "hits").map { |x| x["_source"] }.each_with_object([]) do |ml, a|
-        model = ML_INFO.new(ml["name"], ml["model_version"], ml["model_id"])
-        a << model
-      end
-      lst.uniq
+      raw_list.dig("hits", "hits")
+        .map { |x| x["_source"] }
+        .map { |ml| ML_INFO.new(ml["name"], ml["model_version"], ml["model_id"]) }
+        .uniq
     end
 
     def raw_list
@@ -64,11 +63,13 @@ module OpenSearch::Sugar
 
     def undeploy!(name_or_id)
       m = self[name_or_id]
+      raise ArgumentError, "Model '#{name_or_id}' not found" unless m
       @os.http.post("/_plugins/_ml/models/#{m.id}/_undeploy")
     end
 
     def delete!(name_or_id)
       m = self[name_or_id]
+      raise ArgumentError, "Model '#{name_or_id}' not found" unless m
       undeploy!(m.id)
       @os.http.delete("/_plugins/_ml/models/#{m.id}")
     end
@@ -83,7 +84,7 @@ module OpenSearch::Sugar
       end
 
       payload = {
-        description: description,
+        description:,
         processors: [
           {
             text_embedding: {

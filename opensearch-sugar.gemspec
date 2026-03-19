@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A little suger on top of the opensearch client"
   spec.homepage = "http://example.com"
-  spec.required_ruby_version = ">= 3.1.0"
+  spec.required_ruby_version = ">= 3.4.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "http://example.com"

@@ -12,34 +12,24 @@ module OpenSearch::Sugar
     # @param client [OpenSearch::Sugar::Client]
     def self.open(client:, name:)
       raise ArgumentError, "Index #{name} not found" unless client.indices.exists?(index: name)
-      new(client: client, name: name)
+      new(client:, name:)
     end
 
     def self.create(client:, name:, knn: true)
-      raise ArgumentError.new("Index #{name} already exists") if client.indices.exists?(index: name)
-      client.indices.create(index: name, body: {settings: {index: {knn: knn}}})
-      new(client: client, name: name)
+      raise ArgumentError, "Index #{name} already exists" if client.indices.exists?(index: name)
+      client.indices.create(index: name, body: {settings: {index: {knn:}}})
+      new(client:, name:)
     end
 
-    def update_settings(settings)
-      client.update_settings(settings, name)
-    end
+    def update_settings(settings) = client.update_settings(settings, name)
 
-    def settings
-      client.indices.get_settings(index: name)
-    end
+    def settings = client.indices.get_settings(index: name)
 
-    def update_mappings(mappings)
-      client.update_mappings(mappings, name)
-    end
+    def update_mappings(mappings) = client.update_mappings(mappings, name)
 
-    def mappings
-      client.indices.get_mapping(index: name)
-    end
+    def mappings = client.indices.get_mapping(index: name)
 
-    def delete!
-      client.indices.delete(index: name)
-    end
+    def delete! = client.indices.delete(index: name)
 
     def count
       response = client.count(index: name)
@@ -63,8 +53,9 @@ module OpenSearch::Sugar
 
     # Get a list of all named analyzers available in this index for use when indexing
     # Include those defined at the cluster level as well as those defined for this
-    # particular index
-    # @return [Array<String>] List of analyzer names available for this index
+    # particular index. Note: Built-in analyzers (standard, simple, whitespace, etc.)
+    # are always available but not listed here - this returns custom analyzers only.
+    # @return [Array<String>] List of custom analyzer names available for this index
     def all_available_analyzers
       settings_response = settings
       index_analyzers = settings_response.dig(name, "settings", "index", "analysis", "analyzer")&.keys || []
@@ -83,30 +74,27 @@ module OpenSearch::Sugar
     #   targeted analyzer. If multiple tokens exist at the same point in the token
     #   stream, provide them as an array.
     def analyze_text(analyzer:, text:)
-      # Check if analyzer exists in index settings
-      settings_response = settings
-      unless settings_response.dig(name, "settings", "index", "analysis", "analyzer", analyzer)
-        raise ArgumentError, "Analyzer '#{analyzer}' does not exist in index '#{name}'"
-      end
-
-      # Analyze the text
+      # Analyze the text - OpenSearch will return an error if analyzer doesn't exist
       response = client.indices.analyze(
         index: name,
         body: {
-          analyzer: analyzer,
-          text: text
+          analyzer:,
+          text:
         }
       )
 
-      # Process tokens from response
-      response["tokens"].map do |token|
-        # If position is same as previous token, group them
-        if token["position"] == response["tokens"][response["tokens"].index(token) - 1]&.dig("position")
+      # Process tokens from response - group tokens with same position
+      tokens = response["tokens"]
+      tokens.each_with_index.map do |token, idx|
+        prev_token = tokens[idx - 1]
+        if prev_token && token["position"] == prev_token["position"]
           [token["token"]]
         else
           token["token"]
         end
       end
+    rescue OpenSearch::Transport::Transport::Errors::BadRequest => e
+      raise ArgumentError, "Analyzer '#{analyzer}' does not exist in index '#{name}': #{e.message}"
     end
 
     # Analyze text exact as in #analyze_text, but take a field name that can be used
@@ -120,7 +108,7 @@ module OpenSearch::Sugar
       analyzer = field_mapping["analyzer"]
       raise ArgumentError, "No analyzer specified for field '#{field}'" unless analyzer
 
-      analyze_text(analyzer: analyzer, text: text)
+      analyze_text(analyzer:, text:)
     end
 
     # Deletes the document with the given ID from this index

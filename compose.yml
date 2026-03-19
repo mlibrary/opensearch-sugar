@@ -18,5 +18,8 @@ services:
       - host.docker.internal:host-gateway
     networks:
       - opensearch-net # All of the containers will join the same Docker bridge network
+    depends_on:
+      opensearch:
+        condition: service_healthy
 volumes:
   gem_cache:

@@ -15,12 +15,8 @@ module OpenSearch
   module Sugar
     class Error < StandardError; end
 
-    def self.client(**kwargs)
-      OpenSearch::Sugar::Client.new(**kwargs)
-    end
+    def self.client(**kwargs) = Client.new(**kwargs)
 
-    def self.new(**kwargs)
-      client(**kwargs)
-    end
+    def self.new(**kwargs) = client(**kwargs)
   end
 end

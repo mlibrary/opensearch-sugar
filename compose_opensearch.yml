@@ -26,6 +26,12 @@ services:
         hard: 65536
     tmpfs:
       - /usr/share/opensearch/nodes # Use tmpfs so no data is persisted between runs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sku admin:WD71969!Bill https://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     ports:
       - 9200:9200 # REST API
     networks:
