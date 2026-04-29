@@ -11,7 +11,13 @@ RSpec.describe OpenSearch::Sugar::Index, "aliases" do
 
   before { index }
 
-  after { client.delete_index!(index_name) rescue nil }
+  after {
+    begin
+      client.delete_index!(index_name)
+    rescue
+      nil
+    end
+  }
 
   describe "#aliases" do
     it "returns an empty array for a new index with no aliases" do

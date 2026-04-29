@@ -12,7 +12,9 @@ RSpec.describe OpenSearch::Sugar::Index, "documents" do
   before { index } # ensure index is created
 
   after do
-    client.delete_index!(index_name) rescue nil
+    client.delete_index!(index_name)
+  rescue
+    nil
   end
 
   # Force a refresh so newly indexed docs are immediately searchable
@@ -42,7 +44,10 @@ RSpec.describe OpenSearch::Sugar::Index, "documents" do
   end
 
   describe "#delete_by_id" do
-    before { index.index_document({title: "to delete"}, "target"); refresh }
+    before {
+      index.index_document({title: "to delete"}, "target")
+      refresh
+    }
 
     it "removes the document from the index" do
       index.delete_by_id("target")
@@ -108,7 +113,10 @@ RSpec.describe OpenSearch::Sugar::Index, "documents" do
         f
       end
 
-      after { tmp_file.close; tmp_file.unlink }
+      after {
+        tmp_file.close
+        tmp_file.unlink
+      }
 
       it "reads the file and indexes documents" do
         index.index_jsonl_file(tmp_file.path, id_field: :id)

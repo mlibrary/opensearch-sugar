@@ -10,7 +10,9 @@ RSpec.describe OpenSearch::Sugar::Models, "registration", :models, :slow do
   let(:model_version) { "1.0.1" }
 
   after do
-    models.delete!(model_name) rescue nil
+    models.delete!(model_name)
+  rescue
+    nil
   end
 
   describe "#register" do

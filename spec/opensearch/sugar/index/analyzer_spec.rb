@@ -29,7 +29,13 @@ RSpec.describe OpenSearch::Sugar::Index, "analyzers" do
 
   before { index }
 
-  after { client.delete_index!(index_name) rescue nil }
+  after {
+    begin
+      client.delete_index!(index_name)
+    rescue
+      nil
+    end
+  }
 
   describe "#all_available_analyzers / #analyzers" do
     it "includes the custom analyzer defined in the index settings" do

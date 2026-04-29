@@ -18,9 +18,8 @@ module OpenSearch::Sugar
 
       resp = @os.http.post("/_plugins/_ml/models/_register?deploy=true", body: config)
       taskid = resp["task_id"]
-      while true
+      loop do
         model_install_response = @os.http.get("_plugins/_ml/tasks/#{taskid}")
-        pp model_install_response
         break if model_install_response["state"] == "COMPLETED"
         raise model_install_response["error"].to_s if model_install_response["state"] == "FAILED"
         sleep(5)

@@ -7,7 +7,13 @@ RSpec.describe OpenSearch::Sugar::Index, "lifecycle" do
 
   let(:index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
 
-  after { client.delete_index!(index_name) rescue nil }
+  after {
+    begin
+      client.delete_index!(index_name)
+    rescue
+      nil
+    end
+  }
 
   describe ".open" do
     context "when the index exists" do

@@ -7,7 +7,13 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
 
   let(:index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
 
-  after { client.delete_index!(index_name) rescue nil }
+  after {
+    begin
+      client.delete_index!(index_name)
+    rescue
+      nil
+    end
+  }
 
   describe "#has_index?" do
     context "when the index does not exist" do

@@ -12,9 +12,15 @@ RSpec.describe OpenSearch::Sugar::Client, "cluster settings" do
   # "none"  — disables shard allocation
   # "all"   — re-enables shard allocation (the default)
   let(:disable_allocation) { {persistent: {"cluster.routing.allocation.enable" => "none"}} }
-  let(:enable_allocation)  { {persistent: {"cluster.routing.allocation.enable" => "all"}} }
+  let(:enable_allocation) { {persistent: {"cluster.routing.allocation.enable" => "all"}} }
 
-  after { client.cluster.put_settings(body: enable_allocation) rescue nil }
+  after {
+    begin
+      client.cluster.put_settings(body: enable_allocation)
+    rescue
+      nil
+    end
+  }
 
   describe "#update_settings with a cluster-level setting" do
     it "does not raise when disabling shard allocation" do

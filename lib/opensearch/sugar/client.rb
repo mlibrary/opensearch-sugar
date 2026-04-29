@@ -179,7 +179,7 @@ module OpenSearch::Sugar
       indices.open(index: index_name)
     rescue => open_error
       # Just log the error without raising
-      puts "Warning: Failed to reopen index #{index_name}: #{open_error.message}"
+      warn "Warning: Failed to reopen index #{index_name}: #{open_error.message}"
     end
   end
 end

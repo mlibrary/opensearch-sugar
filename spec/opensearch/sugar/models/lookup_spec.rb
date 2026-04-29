@@ -10,7 +10,13 @@ RSpec.describe OpenSearch::Sugar::Models, "lookup", :models, :slow do
   let(:model_version) { "1.0.1" }
   let!(:registered_model) { models.register(name: model_name, version: model_version) }
 
-  after { models.delete!(model_name) rescue nil }
+  after {
+    begin
+      models.delete!(model_name)
+    rescue
+      nil
+    end
+  }
 
   describe "#list" do
     it "returns an Array" do

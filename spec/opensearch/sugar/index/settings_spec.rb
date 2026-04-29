@@ -10,7 +10,13 @@ RSpec.describe OpenSearch::Sugar::Index, "settings" do
 
   before { index }
 
-  after { client.delete_index!(index_name) rescue nil }
+  after {
+    begin
+      client.delete_index!(index_name)
+    rescue
+      nil
+    end
+  }
 
   describe "#settings" do
     it "returns a Hash" do

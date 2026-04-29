@@ -11,7 +11,13 @@ RSpec.describe OpenSearch::Sugar::Models, "lifecycle", :models, :slow do
 
   describe "#undeploy!" do
     before { models.register(name: model_name, version: model_version) }
-    after  { models.delete!(model_name) rescue nil }
+    after {
+      begin
+        models.delete!(model_name)
+      rescue
+        nil
+      end
+    }
 
     it "undeploys the model without raising" do
       expect { models.undeploy!(model_name) }.not_to raise_error
