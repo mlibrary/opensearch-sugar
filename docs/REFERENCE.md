@@ -629,17 +629,18 @@ Analyzes text using a specified analyzer and returns the resulting tokens.
 - (Array<String, Array<String>>) - Array of tokens; if multiple tokens exist at the same position, they're grouped in a sub-array
 
 **Raises:**
-- (ArgumentError) - If the analyzer doesn't exist in the index
+- (ArgumentError) - If the analyzer doesn't exist in the index's custom settings (built-in analyzers like `standard` are not recognized unless explicitly configured in the index)
 
 **See:** [OpenSearch Analyze API](https://opensearch.org/docs/latest/api-reference/analyze-apis/)
 
 **Example:**
 ```ruby
+# Assumes the index has a custom analyzer named 'my_text_analyzer' in its settings
 tokens = index.analyze_text(
-  analyzer: 'standard',
+  analyzer: 'my_text_analyzer',
   text: 'The quick brown fox'
 )
-# => ["the", "quick", "brown", "fox"]
+# => ["quick", "brown", "fox"]
 ```
 
 #### `#analyze_text_field(field:, text:)`
@@ -752,15 +753,18 @@ end
 
 #### `#[](id_or_fullname_or_nickname)` ⚠️ Deprecated
 
-Returns the raw OpenSearch response for model listing.
+Finds a model by trying exact name match, then exact ID match, then partial (case-insensitive) name search. Returns `nil` if not found. Prefer `find_by_name` or `find_by_id` for clarity.
+
+**Parameters:**
+- `id_or_fullname_or_nickname` (String) - Model name, ID, or partial name
 
 **Returns:**
-- (Hash) - Raw OpenSearch response
+- (ML_INFO, nil) - Matching model info, or `nil` if not found
 
 **Example:**
 ```ruby
-raw = client.models.raw_list
-hits = raw['hits']['hits']
+model = client.models['all-MiniLM-L12-v2']
+puts model&.id
 ```
 
 #### `#undeploy!(name_or_id)`
@@ -984,12 +988,6 @@ rescue OpenSearch::Transport::Transport::Error => e
   puts "Transport error: #{e.message}"
 end
 ```
-
----
-
-## Type Signatures
-
-For type checking with tools like Sorbet or Steep, see the [RBS type signatures](../sig/opensearch/sugar.rbs) in the `sig/` directory.
 
 ---
 

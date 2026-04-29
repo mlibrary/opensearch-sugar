@@ -429,9 +429,6 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 ```bash
 # Run the test suite
 bundle exec rspec
-
-# Run integration tests with Docker
-./run-integration-tests.sh
 ```
 
 ### Docker Environment
@@ -441,9 +438,6 @@ The gem includes Docker configurations for running OpenSearch locally:
 ```bash
 # Start OpenSearch
 docker-compose up -d
-
-# Run integration tests
-bundle exec rspec spec/integration
 ```
 
 ## Contributing

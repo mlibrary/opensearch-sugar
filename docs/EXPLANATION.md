@@ -357,7 +357,7 @@ Aliases are pointers to indexes. They enable:
 
 ```ruby
 # Create new index with updated mappings
-new_index = client.create('products_v2')
+new_index = OpenSearch::Sugar::Index.create(client: client, name: 'products_v2')
 new_index.update_mappings(improved_mappings)
 
 # Copy data from old to new
