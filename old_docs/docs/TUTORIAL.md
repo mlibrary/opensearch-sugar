@@ -149,8 +149,8 @@ settings = {
   }
 }
 
-result = index.update_settings(settings)
-puts "Settings updated: #{result[:message]}"
+index.update_settings(settings)
+puts "Settings updated!"
 ```
 
 **What's happening here?**
@@ -203,8 +203,8 @@ mappings = {
   }
 }
 
-result = index.update_mappings(mappings)
-puts "Mappings updated: #{result[:message]}"
+index.update_mappings(mappings)
+puts "Mappings updated!"
 ```
 
 ## Step 6: Test Your Analyzer
@@ -276,7 +276,7 @@ books.each do |book|
 end
 
 # Refresh to make documents searchable immediately
-client.indices.refresh(index: 'books')
+index.refresh
 
 puts "\nAdded #{books.size} books!"
 puts "Total documents: #{index.count}"
@@ -439,7 +439,7 @@ books.each do |book|
   client.index(index: 'books', id: book[:isbn], body: book)
 end
 
-client.indices.refresh(index: 'books')
+index.refresh
 puts "Created catalog with #{index.count} books!"
 ```
 

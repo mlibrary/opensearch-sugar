@@ -265,15 +265,15 @@ client.delete_index!('my_index')
 Updates settings for an index. Automatically closes and reopens the index.
 
 **Parameters:**
-- `settings` (Hash) - The settings hash (can include `metadata` key)
+- `settings` (Hash) - The settings hash (with or without a top-level `:settings` key)
 - `index_name` (String) - The name of the index to update
 
 **Returns:**
-- (Hash) - Result hash with `:status`, `:message`, and `:metadata` keys
+- (Hash) - The raw OpenSearch response from reopening the index
 
 **Example:**
 ```ruby
-result = client.update_settings(
+client.update_settings(
   {
     settings: {
       analysis: {
@@ -288,10 +288,6 @@ result = client.update_settings(
   },
   'my_index'
 )
-
-if result[:status] == 'success'
-  puts result[:message]
-end
 ```
 
 #### `#update_mappings(mappings, index_name)`
@@ -299,11 +295,11 @@ end
 Updates mappings for an index. Automatically closes and reopens the index.
 
 **Parameters:**
-- `mappings` (Hash) - The mappings hash (can include `metadata` key)
+- `mappings` (Hash) - The mappings hash (with or without a top-level `:mappings` key)
 - `index_name` (String) - The name of the index to update
 
 **Returns:**
-- (Hash) - Result hash with `:status`, `:message`, and `:metadata` keys
+- (Hash) - The raw OpenSearch response from reopening the index
 
 **Example:**
 ```ruby
@@ -435,11 +431,11 @@ Updates the settings for this index.
 - `settings` (Hash) - The settings to apply
 
 **Returns:**
-- (Hash) - Result hash with `:status` and `:message`
+- (Hash) - The raw OpenSearch response from reopening the index
 
 **Example:**
 ```ruby
-result = index.update_settings(
+index.update_settings(
   settings: {
     number_of_replicas: 2,
     refresh_interval: '5s'
@@ -468,11 +464,11 @@ Updates the mappings for this index.
 - `mappings` (Hash) - The mappings to apply
 
 **Returns:**
-- (Hash) - Result hash with `:status` and `:message`
+- (Hash) - The raw OpenSearch response from reopening the index
 
 **Example:**
 ```ruby
-result = index.update_mappings(
+index.update_mappings(
   mappings: {
     properties: {
       title: { type: 'text' },
@@ -593,8 +589,11 @@ Returns all analyzers available to this index (both index-level and cluster-leve
 **Example:**
 ```ruby
 analyzers = index.analyzers
-# => ["standard", "simple", "whitespace", "my_custom_analyzer"]
+# => ["my_custom_analyzer", "book_title_analyzer"]
 ```
+
+**Note:** Only analyzers explicitly defined in index settings or cluster persistent settings are returned.
+Built-in OpenSearch analyzers (e.g., `standard`, `simple`) are not included.
 
 #### `#analyze_text(analyzer:, text:)`
 
@@ -615,11 +614,14 @@ Analyzes text using a specified analyzer and returns the resulting tokens.
 **Example:**
 ```ruby
 tokens = index.analyze_text(
-  analyzer: 'standard',
+  analyzer: 'my_custom_analyzer',
   text: 'The quick brown fox'
 )
-# => ["the", "quick", "brown", "fox"]
+# => ["quick", "brown", "fox"]
 ```
+
+**Note:** The analyzer must be explicitly defined in the index settings.
+Built-in analyzers such as `standard` are not listed in index settings and will raise `ArgumentError`.
 
 #### `#analyze_text_field(field:, text:)`
 

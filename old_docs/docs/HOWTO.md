@@ -299,10 +299,13 @@ end
 ### How to Refresh an Index
 
 ```ruby
-# Make documents immediately searchable
-client.indices.refresh(index: 'my_index')
+index = client['my_index']
 
-# Refresh all indexes
+# Make documents immediately searchable
+index.refresh
+
+# Or using the raw client for a different index or all indexes
+client.indices.refresh(index: 'other_index')
 client.indices.refresh
 ```
 
@@ -344,21 +347,19 @@ end
 ```ruby
 index = client['my_index']
 
-# Analyze text
+# Analyze text using a custom analyzer defined on the index
 tokens = index.analyze_text(
-  analyzer: 'standard',
+  analyzer: 'my_custom_analyzer',
   text: 'The quick brown fox jumps'
 )
 
 puts tokens.join(', ')
-# Output: the, quick, brown, fox, jumps
+# Output: quick, brown, fox, jumps
 ```
 
-**Common analyzers:**
-- `standard` - Standard tokenization
-- `simple` - Lowercase + split on non-letters
-- `whitespace` - Split on whitespace only
-- `keyword` - No tokenization
+**Note:** `analyze_text` works with analyzers explicitly defined in the index settings.
+Use the raw `client.indices.analyze` API to test built-in analyzers (e.g., `standard`)
+without defining them in the index.
 
 ### How to Analyze Text Using a Field's Analyzer
 
@@ -459,8 +460,8 @@ settings = {
   }
 }
 
-result = index.update_settings(settings)
-puts result[:message]
+index.update_settings(settings)
+puts "Settings updated!"
 ```
 
 **The gem automatically:**
@@ -494,8 +495,7 @@ mappings = {
   }
 }
 
-result = index.update_mappings(mappings)
-puts result[:message]
+index.update_mappings(mappings)
 ```
 
 ### How to Get Index Mappings
