@@ -13,4 +13,9 @@ YARD::Rake::YardocTask.new(:yard) do |t|
   t.options = ["--output-dir", "doc/", "--markup", "markdown"]
 end
 
+desc "Run Steep type checker"
+task :steep do
+  sh "bundle exec steep check"
+end
+
 task default: %i[spec standard]

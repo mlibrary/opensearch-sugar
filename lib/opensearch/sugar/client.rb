@@ -6,6 +6,19 @@ require_relative "models"
 require "httpx/adapters/faraday"
 
 module OpenSearch::Sugar
+  # A wrapper around +OpenSearch::Client+ (via +SimpleDelegator+) that adds
+  # index management helpers and object-oriented access to indices and ML models.
+  #
+  # All methods of the underlying +OpenSearch::Client+ are available directly on
+  # this object via delegation. Sugar-specific additions are documented below.
+  #
+  # @example Connect and work with an index
+  #   client = OpenSearch::Sugar::Client.new
+  #   index  = client["my_index"]
+  #   index.count #=> 0
+  #
+  # @see OpenSearch::Sugar::Index
+  # @see OpenSearch::Sugar::Models
   class Client < SimpleDelegator
     # Creates a new raw OpenSearch client instance
     #
@@ -16,13 +29,31 @@ module OpenSearch::Sugar
       ::OpenSearch::Client.new(*args, **kwargs)
     end
 
-    attr_reader :raw_client, :models
-    # Creates a new OpenSearch::Sugar::Client instance
+    # The underlying raw +OpenSearch::Client+ instance, bypassing the Sugar wrapper.
+    # @return [OpenSearch::Client]
+    attr_reader :raw_client
+
+    # The {OpenSearch::Sugar::Models} instance for ML model management on this cluster.
+    # @return [OpenSearch::Sugar::Models]
+    attr_reader :models
+
+    # Creates a new {OpenSearch::Sugar::Client}.
     #
-    # @param host [String] The OpenSearch host to connect to
-    # @param kwargs [Hash] Additional arguments to pass to the OpenSearch::Client constructor
-    # @return [OpenSearch::Sugar::Client] A new client instance
-    # @see [OpenSearch::Client]
+    # Falls back to environment variables if keyword arguments are omitted:
+    # - +host+ — +OPENSEARCH_URL+ → +OPENSEARCH_HOST+ → +"https://localhost:9000"+
+    # - +user+ — +OPENSEARCH_USER+ → +"admin"+
+    # - +password+ — +OPENSEARCH_PASSWORD+ → +OPENSEARCH_INITIAL_ADMIN_PASSWORD+
+    #
+    # All keyword arguments are merged with {#default_args}, with explicit kwargs taking
+    # precedence.
+    #
+    # @param host [String] OpenSearch base URL
+    # @param kwargs [Hash] Additional keyword arguments forwarded to +OpenSearch::Client.new+
+    # @see https://github.com/opensearch-project/opensearch-ruby OpenSearch Ruby client
+    # @example Connect using environment variables
+    #   client = OpenSearch::Sugar::Client.new
+    # @example Connect to a specific host
+    #   client = OpenSearch::Sugar::Client.new(host: "https://search.example.com:9200")
     def initialize(host: ENV["OPENSEARCH_URL"] || ENV["OPENSEARCH_HOST"] || "https://localhost:9000", **kwargs)
       kwargs[:host] = host
       args = default_args.merge(kwargs)
@@ -31,9 +62,19 @@ module OpenSearch::Sugar
       @models = Models.new(self)
     end
 
-    # Returns the default arguments for the OpenSearch client
+    # Returns the default connection arguments used when building the underlying client.
     #
-    # @return [Hash] The default connection arguments
+    # Values are drawn from environment variables where available:
+    # - +:user+ — +OPENSEARCH_USER+ (default: +"admin"+)
+    # - +:password+ — +OPENSEARCH_PASSWORD+ or +OPENSEARCH_INITIAL_ADMIN_PASSWORD+
+    # - +:host+ — +OPENSEARCH_URL+ (default: +"https://localhost:9000"+)
+    # - +:retry_on_failure+ — 5
+    # - +:request_timeout+ — 5 seconds
+    # - +:log+ — +true+
+    # - +:trace+ — +false+
+    # - +:transport_options+ — SSL verification disabled
+    #
+    # @return [Hash{Symbol => Object}] Default keyword arguments for +OpenSearch::Client.new+
     def default_args
       {
         user: ENV["OPENSEARCH_USER"] || "admin",
@@ -47,8 +88,18 @@ module OpenSearch::Sugar
       }
     end
 
-    # Set the log level. You can use a specific logger, or default to the root logger
-    # See https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/
+    # Sets a cluster-wide log level via the OpenSearch dynamic settings API.
+    #
+    # Writes a persistent cluster setting, so the change survives restarts.
+    #
+    # @param logger [String] The logger name to configure (default: +"logger._root"+)
+    # @param level [String] Log level — one of +"trace"+, +"debug"+, +"info"+, +"warn"+, +"error"+ (default: +"warn"+)
+    # @return [Hash] The OpenSearch response
+    # @see https://docs.opensearch.org/latest/install-and-configure/configuring-opensearch/logs/ OpenSearch logging docs
+    # @example Silence most cluster noise
+    #   client.set_log_level(level: "error")
+    # @example Set a specific logger
+    #   client.set_log_level(logger: "logger.org.opensearch.discovery", level: "debug")
     def set_log_level(logger: "logger._root", level: "warn")
       http.put("_cluster/settings", body: {persistent: {logger.to_s => level.to_s}})
     end
@@ -61,6 +112,11 @@ module OpenSearch::Sugar
       indices.exists?(index: name)
     end
 
+    # Returns the names of all non-system indices in the cluster.
+    #
+    # @return [Array<String>] Index names
+    # @example
+    #   client.index_names #=> ["products", "orders", "users"]
     def index_names
       cluster.state["metadata"]["indices"].keys
     end

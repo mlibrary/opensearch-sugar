@@ -14,7 +14,7 @@ module OpenSearch
     # Alias for .client.
     def self.new: (**untyped kwargs) -> Client
 
-    class Client < SimpleDelegator
+    class Client < ::SimpleDelegator
       attr_reader raw_client: untyped
       attr_reader models: Models
 
@@ -51,11 +51,20 @@ module OpenSearch
 
       # Sets a cluster-level log level.
       def set_log_level: (?logger: String, ?level: String) -> untyped
+
+      private
+
+      def reopen_index: (String index_name) -> void
     end
 
     class Index
       attr_accessor client: Client
       attr_accessor name: String
+
+      module Include
+        module Utilities
+        end
+      end
 
       # Opens an existing index. Raises ArgumentError if not found.
       def self.open: (client: Client, name: String) -> Index
@@ -100,10 +109,22 @@ module OpenSearch
       interface _EachLine
         def each_line: () { (String) -> void } -> void
       end
+
+      private
+
+      def initialize: (client: Client, name: String) -> void
+      def default_index_body: () -> Hash[Symbol, untyped]
     end
 
     class Models
-      ML_INFO: untyped  # Struct with :name, :version, :id
+      # Struct holding name, version, and id for a deployed ML model.
+      class ML_INFO
+        attr_reader name: String
+        attr_reader version: String
+        attr_reader id: String
+
+        def initialize: (String name, String version, String id) -> void
+      end
 
       def initialize: (Client os) -> void
 
