@@ -88,7 +88,8 @@ module OpenSearch::Sugar
     #
     # @param settings [Hash] The settings to upload
     # @param index_name [String] The name of the index to update
-    # @return [Hash] A result hash with status, message, and metadata
+    # @return [Hash] The response from OpenSearch on success
+    # @raise [OpenSearch::Sugar::Error] If the settings update fails
     # @example
     #   settings = {
     #     settings: {
@@ -100,18 +101,9 @@ module OpenSearch::Sugar
     #           }
     #         }
     #       }
-    #     },
-    #     metadata: {
-    #       description: "Custom analyzer settings"
     #     }
     #   }
-    #
-    #   result = client.update_settings(settings, index: "my_index")
-    #   if result[:status] == "success"
-    #     puts "Settings updated: #{result[:message]}"
-    #   else
-    #     puts "Error: #{result[:message]}"
-    #   end
+    #   client.update_settings(settings, "my_index")
     def update_settings(settings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
       opensearch_settings = if settings.keys.map(&:to_s) == ["settings"]
@@ -122,21 +114,9 @@ module OpenSearch::Sugar
       indices.close(index: index_name)
       indices.put_settings(index: index_name, body: opensearch_settings)
       indices.open(index: index_name)
-
-      {
-        status: "success",
-        message: "Updated settings for index #{index_name}",
-        metadata: settings[:metadata]
-      }
     rescue => e
-      # Try to reopen the index if it's closed
       reopen_index(index_name)
-
-      {
-        status: "error",
-        message: "Failed to update settings: #{e.message}",
-        backtrace: e.backtrace
-      }
+      raise OpenSearch::Sugar::Error, "Failed to update settings for #{index_name}: #{e.message}"
     end
 
     # Uploads mappings to an OpenSearch index
@@ -148,7 +128,8 @@ module OpenSearch::Sugar
     #
     # @param mappings [Hash] The mappings to upload
     # @param index_name [String] The name of the index to update
-    # @return [Hash] A result hash with status, message, and metadata
+    # @return [Hash] The response from OpenSearch on success
+    # @raise [OpenSearch::Sugar::Error] If the mappings update fails
     # @example
     #   mappings = {
     #     mappings: {
@@ -157,18 +138,9 @@ module OpenSearch::Sugar
     #         description: { type: "text" },
     #         created_at: { type: "date" }
     #       }
-    #     },
-    #     metadata: {
-    #       description: "Basic document mappings"
     #     }
     #   }
-    #
-    #   result = client.update_mappings(mappings, "my_index")
-    #   if result[:status] == "success"
-    #     puts "Mappings updated: #{result[:message]}"
-    #   else
-    #     puts "Error: #{result[:message]}"
-    #   end
+    #   client.update_mappings(mappings, "my_index")
     def update_mappings(mappings, index_name)
       # Extract the actual OpenSearch settings from our enhanced settings object
       opensearch_mappings = if mappings.keys.map(&:to_s) == ["mappings"]
@@ -179,20 +151,9 @@ module OpenSearch::Sugar
       indices.close(index: index_name)
       indices.put_mapping(index: index_name, body: opensearch_mappings)
       indices.open(index: index_name)
-
-      {
-        status: "success",
-        message: "Updated mappings for index #{index_name}",
-        metadata: mappings[:metadata]
-      }
     rescue => e
-      # Try to reopen the index if it's closed
       reopen_index(index_name)
-      {
-        status: "error",
-        message: "Failed to update mappings: #{e.message}",
-        backtrace: e.backtrace
-      }
+      raise OpenSearch::Sugar::Error, "Failed to update mappings for #{index_name}: #{e.message}"
     end
 
     private
@@ -202,9 +163,7 @@ module OpenSearch::Sugar
     # @param index_name [String] The name of the index to reopen
     # @return [void]
     def reopen_index(index_name)
-      if indices.status(index: index_name).dig("indices", index_name, "state") == "close"
-        indices.open(index: index_name)
-      end
+      indices.open(index: index_name)
     rescue => open_error
       # Just log the error without raising
       puts "Warning: Failed to reopen index #{index_name}: #{open_error.message}"

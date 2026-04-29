@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "json"
 require_relative "client"
 
 module OpenSearch::Sugar
@@ -98,10 +99,10 @@ module OpenSearch::Sugar
         }
       )
 
-      # Process tokens from response
-      response["tokens"].map do |token|
-        # If position is same as previous token, group them
-        if token["position"] == response["tokens"][response["tokens"].index(token) - 1]&.dig("position")
+      # Process tokens from response, grouping same-position tokens as arrays
+      tokens = response["tokens"]
+      tokens.each_with_index.map do |token, i|
+        if i > 0 && token["position"] == tokens[i - 1]["position"]
           [token["token"]]
         else
           token["token"]
@@ -150,10 +151,49 @@ module OpenSearch::Sugar
       response["deleted"].to_i
     end
 
-    def index_document(doc, uid)
+    # Index a single document into this index.
+    #
+    # This method is intentionally simple and inefficient — it issues one HTTP request
+    # per document. For bulk loading, use the raw +client.bulk+ API instead.
+    #
+    # @todo Replace with a bulk-API implementation for large-scale use.
+    #
+    # @param doc [Hash] The document body to index
+    # @param id [String] The document ID (_id in OpenSearch)
+    # @return [Hash] The OpenSearch response
+    def index_document(doc, id)
+      # TODO: inefficient for large-scale use; implement bulk upload API
+      client.index(index: name, id: id, body: doc)
     end
 
-    def index_jsonl(filename)
+    # Index all documents from a JSONL (newline-delimited JSON) file or IO-like object.
+    #
+    # Each line must be a valid JSON object. The value of +id_field+ in each document
+    # is used as the document ID. Raises +ArgumentError+ if any line is missing the
+    # specified field.
+    #
+    # Accepts a file path (String) or any IO-like object (e.g. +File+, +StringIO+),
+    # which makes it straightforward to test without touching the filesystem.
+    #
+    # This method is intentionally simple and inefficient — it calls +#index_document+
+    # once per line. For bulk loading, use the raw +client.bulk+ API instead.
+    #
+    # @todo Replace with a bulk-API implementation for large-scale use.
+    #
+    # @param source [String, #each_line] A file path or an IO-like object
+    # @param id_field [Symbol, String] The key in each document to use as the document ID
+    # @return [void]
+    # @raise [ArgumentError] If a document does not contain the specified +id_field+
+    def index_jsonl_file(source, id_field:)
+      # TODO: inefficient for large-scale use; implement bulk upload API
+      io = source.is_a?(String) ? File.open(source) : source
+      io.each_line do |line|
+        doc = JSON.parse(line, symbolize_names: true)
+        id = doc.fetch(id_field.to_sym) {
+          raise ArgumentError, "id_field :#{id_field} not found in document: #{line.chomp}"
+        }
+        index_document(doc, id.to_s)
+      end
     end
 
     private

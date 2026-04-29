@@ -390,28 +390,30 @@ Complete documentation is available in the `docs/` directory, organized followin
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt.
+After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt.
 
 ### Running Tests
 
-```bash
-# Run the test suite
-bundle exec rspec
-
-# Run integration tests with Docker
-./run-integration-tests.sh
-```
-
-### Docker Environment
-
-The gem includes Docker configurations for running OpenSearch locally:
+Tests are integration tests that require a live OpenSearch node. Start one with Docker, then run the suite:
 
 ```bash
 # Start OpenSearch
-docker-compose up -d
+docker compose up -d
 
-# Run integration tests
-bundle exec rspec spec/integration
+# Run the test suite
+bundle exec rspec
+
+# Run only ML model specs (slow; require the ML Commons plugin)
+bundle exec rspec --tag models
+```
+
+### Debugging: enabling HTTP request logging
+
+By default, the test client suppresses OpenSearch HTTP logs to keep output readable.
+Set `OPENSEARCH_LOG=true` to restore full request/response logging:
+
+```bash
+OPENSEARCH_LOG=true bundle exec rspec
 ```
 
 ## Contributing
