@@ -11,7 +11,7 @@ Accepted
 ## Context
 
 `OpenSearch::Sugar::Client` needs to provide convenient, higher-level methods (e.g., `has_index?`,
-`open_or_create`, index management helpers) while also giving callers access to the full
+`open_or_create_index`, index management helpers) while also giving callers access to the full
 `OpenSearch::Client` API. The OpenSearch Ruby client exposes a large, versioned surface area —
 cluster operations, document APIs, index APIs, ML Commons, and more — that would be impractical
 to wrap exhaustively and expensive to keep in sync as the upstream client evolves.
@@ -41,7 +41,7 @@ class OpenSearch::Sugar::Client < SimpleDelegator
     indices.exists?(index: name)
   end
 
-  def open_or_create(name, ...)
+  def open_or_create_index(name, ...)
     # ...
   end
 end
@@ -113,7 +113,7 @@ classDiagram
     class `OpenSearch::Sugar::Client` {
         -@raw_client : OpenSearch::Client
         +has_index?(name) bool
-        +open_or_create(name) Index
+        +open_or_create_index(name) Index
         +index_names() Array
         +models() Models
     }

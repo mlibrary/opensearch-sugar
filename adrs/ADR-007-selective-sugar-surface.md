@@ -31,7 +31,7 @@ Sugar wraps only operations where a higher-level interface provides meaningful v
   for settings changes — see ADR-002)
 - **Lifecycle management** that requires orchestration (e.g., model registration and
   deployment — see ADR-003)
-- **Common index management boilerplate** (`open_or_create`, `has_index?`, `index_names`)
+- **Common index management boilerplate** (`open_or_create_index`, `has_index?`, `index_names`)
 - **Text analysis helpers** (`analyze_text`, `analyze_text_field`)
 
 Document CRUD, search, bulk operations, aggregations, and cluster management are intentionally
@@ -39,7 +39,7 @@ left as raw-client operations:
 
 ```ruby
 # Sugar — meaningful abstraction
-index = client.open_or_create("products")
+index = client.open_or_create_index("products")
 index.update_settings(settings)          # hides close/reopen
 index.count                              # hides query body construction
 model = client.models.register(...)      # hides polling loop

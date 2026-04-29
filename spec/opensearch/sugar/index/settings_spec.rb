@@ -10,7 +10,7 @@ RSpec.describe OpenSearch::Sugar::Index, "settings" do
 
   before { index }
 
-  after { client.indices.delete(index: index_name) rescue nil }
+  after { client.delete_index!(index_name) rescue nil }
 
   describe "#settings" do
     it "returns a Hash" do
@@ -55,8 +55,11 @@ RSpec.describe OpenSearch::Sugar::Index, "settings" do
     end
 
     it "leaves the index open (accessible) after a failed update" do
-      index.update_settings({settings: {index: {nonexistent_setting_xyz: "bad"}}}) rescue nil
-      # Index should still be reachable — count should not raise
+      begin
+        index.update_settings({settings: {index: {nonexistent_setting_xyz: "bad"}}})
+      rescue OpenSearch::Sugar::Error
+        # expected — testing that the index is still accessible after the failure
+      end
       expect { index.count }.not_to raise_error
     end
   end

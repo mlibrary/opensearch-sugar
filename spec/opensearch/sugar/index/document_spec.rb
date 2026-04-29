@@ -12,12 +12,12 @@ RSpec.describe OpenSearch::Sugar::Index, "documents" do
   before { index } # ensure index is created
 
   after do
-    client.indices.delete(index: index_name) rescue nil
+    client.delete_index!(index_name) rescue nil
   end
 
   # Force a refresh so newly indexed docs are immediately searchable
   def refresh
-    client.indices.refresh(index: index_name)
+    index.refresh
   end
 
   describe "#count" do
@@ -34,10 +34,6 @@ RSpec.describe OpenSearch::Sugar::Index, "documents" do
   end
 
   describe "#index_document" do
-    it "indexes a document without raising" do
-      expect { index.index_document({title: "hello"}, "doc-1") }.not_to raise_error
-    end
-
     it "makes the document retrievable" do
       index.index_document({title: "hello"}, "doc-1")
       refresh

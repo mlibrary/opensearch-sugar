@@ -12,7 +12,7 @@ RSpec.describe OpenSearch::Sugar::Models, "pipeline", :models, :slow do
   let!(:registered_model) { models.register(name: model_name, version: model_version) }
 
   after do
-    client.ingest.delete_pipeline(id: pipeline_name) rescue nil
+    client.models.delete_pipeline!(pipeline_name) rescue nil
     models.delete!(model_name) rescue nil
   end
 

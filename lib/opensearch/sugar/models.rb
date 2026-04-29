@@ -73,6 +73,14 @@ module OpenSearch::Sugar
       @os.http.delete("/_plugins/_ml/models/#{m.id}")
     end
 
+    # Deletes an ingest pipeline by name.
+    #
+    # @param pipeline_name [String] The name of the pipeline to delete
+    # @return [Hash] The OpenSearch acknowledgement response
+    def delete_pipeline!(pipeline_name)
+      @os.ingest.delete_pipeline(id: pipeline_name)
+    end
+
     def create_pipeline(name:, model:, description:, field_map:)
       m = self[model]
       raise "Can't find model #{model}" unless m

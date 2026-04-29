@@ -106,7 +106,7 @@ Let's create an index for storing books. Add to your `catalog.rb`:
 
 ```ruby
 # Create or open the books index
-index = client.open_or_create('books')
+index = client.open_or_create_index('books')
 
 puts "Index 'books' is ready!"
 puts "Document count: #{index.count}"
@@ -369,7 +369,7 @@ require 'dotenv/load'
 
 # Connect
 client = OpenSearch::Sugar.new
-index = client.open_or_create('books')
+index = client.open_or_create_index('books')
 
 # Configure settings
 settings = {
@@ -477,7 +477,7 @@ index.delete!
 
 **Index already exists?**
 - Delete it first: `client.indices.delete(index: 'books')`
-- Or use `open_or_create` instead of `create`
+- Or use `open_or_create_index` instead of `create`
 
 **Settings update fails?**
 - Some settings can't be changed on an open index

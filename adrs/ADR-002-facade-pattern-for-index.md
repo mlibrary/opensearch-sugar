@@ -50,7 +50,7 @@ index.update_settings(
 index.settings
 
 # Behind the scenes: close → open (if index exists); create (if not)
-index = client.open_or_create("my_index")
+index = client.open_or_create_index("my_index")
 
 # Single call for text analysis
 tokens = index.analyze_text(analyzer: "my_analyzer", text: "Hello World")

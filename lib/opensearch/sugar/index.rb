@@ -12,12 +12,12 @@ module OpenSearch::Sugar
 
     # @param client [OpenSearch::Sugar::Client]
     def self.open(client:, name:)
-      raise ArgumentError, "Index #{name} not found" unless client.indices.exists?(index: name)
+      raise ArgumentError, "Index #{name} not found" unless client.has_index?(name)
       new(client: client, name: name)
     end
 
     def self.create(client:, name:, knn: true)
-      raise ArgumentError.new("Index #{name} already exists") if client.indices.exists?(index: name)
+      raise ArgumentError.new("Index #{name} already exists") if client.has_index?(name)
       client.indices.create(index: name, body: {settings: {index: {knn: knn}}})
       new(client: client, name: name)
     end
@@ -40,6 +40,14 @@ module OpenSearch::Sugar
 
     def delete!
       client.indices.delete(index: name)
+    end
+
+    # Forces a refresh of this index, making all recently indexed documents
+    # immediately visible to searches. Useful in tests and after bulk indexing.
+    #
+    # @return [Hash] The OpenSearch response
+    def refresh
+      client.indices.refresh(index: name)
     end
 
     def count

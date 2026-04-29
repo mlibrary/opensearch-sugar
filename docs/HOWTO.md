@@ -123,7 +123,7 @@ index = OpenSearch::Sugar::Index.create(
 ```
 
 **When this fails:**
-- Index already exists → Use `open_or_create` or delete the existing index first
+- Index already exists → Use `open_or_create_index` or delete the existing index first
 
 ### How to Open an Existing Index
 
@@ -136,13 +136,13 @@ index = OpenSearch::Sugar::Index.open(client: client, name: 'my_index')
 ```
 
 **When this fails:**
-- Index doesn't exist → Use `create` or `open_or_create`
+- Index doesn't exist → Use `create` or `open_or_create_index`
 
 ### How to Open or Create an Index
 
 ```ruby
 # Opens if exists, creates if doesn't
-index = client.open_or_create('my_index')
+index = client.open_or_create_index('my_index')
 ```
 
 **Use this when:**

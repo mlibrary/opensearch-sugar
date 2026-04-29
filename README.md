@@ -67,7 +67,7 @@ index = OpenSearch::Sugar::Index.create(
 index = client['my_index']
 
 # Or open if exists, create if doesn't
-index = client.open_or_create('my_index')
+index = client.open_or_create_index('my_index')
 ```
 
 ### 3. Configure Index Settings and Mappings
@@ -273,7 +273,8 @@ The main client class that wraps the OpenSearch client with convenient methods.
 - `#has_index?(name)` - Check if an index exists
 - `#index_names` - Get list of all index names
 - `#[](index_name)` - Open an index by name
-- `#open_or_create(index_name)` - Open existing or create new index
+- `#open_or_create_index(index_name)` - Open existing or create new index
+- `#delete_index!(index_name)` - Delete an index by name
 - `#update_settings(settings, index_name)` - Update index settings
 - `#update_mappings(mappings, index_name)` - Update index mappings
 - `#set_log_level(logger:, level:)` - Set OpenSearch log level
@@ -293,8 +294,11 @@ Represents an OpenSearch index with methods for management and querying.
 **Instance Methods:**
 - `#count` - Get document count
 - `#delete!` - Delete the index
+- `#refresh` - Force an index refresh (make indexed docs immediately searchable)
 - `#clear!` - Delete all documents from the index
 - `#delete_by_id(id)` - Delete a specific document
+- `#index_document(doc, id)` - Index a single document
+- `#index_jsonl_file(source, id_field:)` - Index documents from a JSONL file or IO
 - `#settings` - Get index settings
 - `#update_settings(settings)` - Update settings
 - `#mappings` - Get index mappings
@@ -318,6 +322,7 @@ Manages machine learning models in OpenSearch.
 - `#undeploy!(name_or_id)` - Undeploy a model
 - `#delete!(name_or_id)` - Delete a model
 - `#create_pipeline(name:, model:, description:, field_map:)` - Create an ingest pipeline
+- `#delete_pipeline!(name)` - Delete an ingest pipeline
 
 See the [OpenSearch ML Commons documentation](https://opensearch.org/docs/latest/ml-commons-plugin/index/) for more information on ML models.
 

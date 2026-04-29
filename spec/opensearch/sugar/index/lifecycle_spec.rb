@@ -7,11 +7,11 @@ RSpec.describe OpenSearch::Sugar::Index, "lifecycle" do
 
   let(:index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
 
-  after { client.indices.delete(index: index_name) rescue nil }
+  after { client.delete_index!(index_name) rescue nil }
 
   describe ".open" do
     context "when the index exists" do
-      before { client.indices.create(index: index_name) }
+      before { client.open_or_create_index(index_name) }
 
       it "returns an Index with the correct name" do
         index = OpenSearch::Sugar::Index.open(client: client, name: index_name)
@@ -39,7 +39,7 @@ RSpec.describe OpenSearch::Sugar::Index, "lifecycle" do
     end
 
     context "when the index already exists" do
-      before { client.indices.create(index: index_name) }
+      before { client.open_or_create_index(index_name) }
 
       it "raises ArgumentError" do
         expect {
@@ -50,7 +50,7 @@ RSpec.describe OpenSearch::Sugar::Index, "lifecycle" do
   end
 
   describe "#delete!" do
-    before { client.indices.create(index: index_name) }
+    before { client.open_or_create_index(index_name) }
 
     it "deletes the index" do
       index = OpenSearch::Sugar::Index.open(client: client, name: index_name)

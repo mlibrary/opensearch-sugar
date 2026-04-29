@@ -73,10 +73,23 @@ module OpenSearch::Sugar
       Index.open(client: self, name: index_name)
     end
 
-    def open_or_create(index_name)
+    # Opens an existing index or creates it if it does not exist.
+    #
+    # @param index_name [String] The name of the index
+    # @return [OpenSearch::Sugar::Index]
+    def open_or_create_index(index_name)
       Index.open(client: self, name: index_name)
     rescue ArgumentError
       Index.create(client: self, name: index_name)
+    end
+
+    # Deletes an index by name.
+    #
+    # @param index_name [String] The name of the index to delete
+    # @return [Hash] The OpenSearch acknowledgement response
+    # @raise [OpenSearch::Transport::Transport::Errors::NotFound] if the index does not exist
+    def delete_index!(index_name)
+      indices.delete(index: index_name)
     end
 
     # Uploads settings to an OpenSearch index

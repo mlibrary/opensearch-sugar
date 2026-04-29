@@ -7,7 +7,7 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
 
   let(:index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
 
-  after { client.indices.delete(index: index_name) rescue nil }
+  after { client.delete_index!(index_name) rescue nil }
 
   describe "#has_index?" do
     context "when the index does not exist" do
@@ -17,7 +17,7 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
     end
 
     context "when the index exists" do
-      before { client.indices.create(index: index_name) }
+      before { client.open_or_create_index(index_name) }
 
       it "returns true" do
         expect(client.has_index?(index_name)).to be true
@@ -26,7 +26,7 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
   end
 
   describe "#index_names" do
-    before { client.indices.create(index: index_name) }
+    before { client.open_or_create_index(index_name) }
 
     it "includes the created index" do
       expect(client.index_names).to include(index_name)
@@ -39,7 +39,7 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
   end
 
   describe "#[]" do
-    before { client.indices.create(index: index_name) }
+    before { client.open_or_create_index(index_name) }
 
     it "returns an OpenSearch::Sugar::Index for an existing index" do
       expect(client[index_name]).to be_a(OpenSearch::Sugar::Index)
@@ -54,20 +54,20 @@ RSpec.describe OpenSearch::Sugar::Client, "index management" do
     end
   end
 
-  describe "#open_or_create" do
+  describe "#open_or_create_index" do
     context "when the index does not exist" do
       it "creates and returns an Index" do
-        index = client.open_or_create(index_name)
+        index = client.open_or_create_index(index_name)
         expect(index).to be_a(OpenSearch::Sugar::Index)
         expect(client.has_index?(index_name)).to be true
       end
     end
 
     context "when the index already exists" do
-      before { client.indices.create(index: index_name) }
+      before { client.open_or_create_index(index_name) }
 
       it "opens and returns the existing Index" do
-        index = client.open_or_create(index_name)
+        index = client.open_or_create_index(index_name)
         expect(index).to be_a(OpenSearch::Sugar::Index)
         expect(index.name).to eq(index_name)
       end

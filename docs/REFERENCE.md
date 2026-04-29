@@ -228,7 +228,7 @@ Opens an existing index by name.
 index = client['my_index']
 ```
 
-#### `#open_or_create(index_name)`
+#### `#open_or_create_index(index_name)`
 
 Opens an existing index or creates it if it doesn't exist.
 
@@ -240,7 +240,24 @@ Opens an existing index or creates it if it doesn't exist.
 
 **Example:**
 ```ruby
-index = client.open_or_create('my_index')
+index = client.open_or_create_index('my_index')
+```
+
+#### `#delete_index!(index_name)`
+
+Deletes the named index and all its data.
+
+**Parameters:**
+- `index_name` (String) - The name of the index to delete
+
+**Returns:**
+- (Hash) - OpenSearch acknowledgement response
+
+**Warning:** This operation is irreversible!
+
+**Example:**
+```ruby
+client.delete_index!('my_index')
 ```
 
 #### `#update_settings(settings, index_name)`
@@ -490,6 +507,21 @@ Permanently deletes this index and all its data.
 **Example:**
 ```ruby
 index.delete!
+```
+
+#### `#refresh`
+
+Forces an index refresh, making all recently indexed documents immediately visible to searches.
+Useful after bulk indexing operations when you need immediate search visibility.
+
+**Returns:**
+- (Hash) - OpenSearch response
+
+**Example:**
+```ruby
+index.index_document({title: "hello"}, "1")
+index.refresh
+puts index.count # => 1
 ```
 
 #### `#clear!`

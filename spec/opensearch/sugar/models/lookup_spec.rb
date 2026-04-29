@@ -39,7 +39,7 @@ RSpec.describe OpenSearch::Sugar::Models, "lookup", :models, :slow do
     end
 
     it "finds the model by a partial name (case-insensitive)" do
-      result = models["all-MiniLM"]
+      result = models["all-minilm"]  # all lowercase — verifies case-insensitive matching
       expect(result).not_to be_nil
       expect(result.name).to include("MiniLM")
     end

@@ -17,7 +17,7 @@ RSpec.describe OpenSearch::Sugar::Client, "cluster settings" do
   after { client.cluster.put_settings(body: enable_allocation) rescue nil }
 
   describe "#update_settings with a cluster-level setting" do
-    it "applies the setting without raising" do
+    it "does not raise when disabling shard allocation" do
       expect { client.cluster.put_settings(body: disable_allocation) }.not_to raise_error
     end
 

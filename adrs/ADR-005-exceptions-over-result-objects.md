@@ -33,7 +33,7 @@ more specific subclass) for errors that originate within the gem; errors from th
 ```ruby
 # Sugar raises on failure
 begin
-  index = client.open_or_create("my_index")
+  index = client.open_or_create_index("my_index")
   index.update_settings(settings)
 rescue OpenSearch::Sugar::Error => e
   # Sugar-level error (e.g., invalid arguments, sequence failure)
@@ -58,6 +58,11 @@ The Result pattern was considered and summarized in full detail, but not adopted
   and users familiar with Ruby (or any Ruby gem) will immediately understand the contract.
 - **Clean happy path**: methods return their values directly with no wrapping. Callers that
   don't care about errors don't need to unwrap anything.
+- **Chainable interfaces**: because successful methods return their natural value (an `Index`,
+  an `Integer`, a `Hash`) rather than a `Result` wrapper, return values can be used directly
+  in chains and compositions without a prior unwrapping step. For example,
+  `client.open_or_create_index("my_index").update_settings(settings)` works naturally. With
+  `Result` objects, each step would require unwrapping before the next call.
 - **No new dependencies**: Result types would require either `dry-monads` or a custom
   implementation. Exceptions are built into the language.
 - **Interoperability**: code that mixes Sugar calls with other Ruby libraries doesn't need

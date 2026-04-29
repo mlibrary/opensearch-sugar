@@ -10,7 +10,7 @@ RSpec.describe OpenSearch::Sugar::Index, "mappings" do
 
   before { index }
 
-  after { client.indices.delete(index: index_name) rescue nil }
+  after { client.delete_index!(index_name) rescue nil }
 
   describe "#mappings" do
     it "returns a Hash" do
@@ -53,7 +53,11 @@ RSpec.describe OpenSearch::Sugar::Index, "mappings" do
 
     it "leaves the index open after a failed update" do
       bad_mapping = {mappings: {properties: {bad_field: {type: "not_a_real_type"}}}}
-      index.update_mappings(bad_mapping) rescue nil
+      begin
+        index.update_mappings(bad_mapping)
+      rescue OpenSearch::Sugar::Error
+        # expected — testing that the index is still accessible after the failure
+      end
       expect { index.count }.not_to raise_error
     end
   end
