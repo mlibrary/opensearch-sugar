@@ -378,7 +378,7 @@ end
 
 ```ruby
 begin
-  tokens = index.analyze_text(analyzer: "missing", text: "hello")
+  tokens = index.test_analyzer_by_name(analyzer: "missing", text: "hello")
 rescue ArgumentError => e
   puts e.message
   puts "Available: #{index.analyzers.join(", ")}"
@@ -474,7 +474,7 @@ index.update_mappings(
 ### Troubleshooting
 
 **`ArgumentError: Analyzer 'x' does not exist in index 'y'`**
-The analyzer was not registered before calling `analyze_text`. Run `update_settings`
+The analyzer was not registered before calling `test_analyzer_by_name`. Run `update_settings`
 first, then verify with `index.analyzers`.
 
 **Settings update fails with a 400 error**
@@ -546,9 +546,9 @@ The response is keyed by index name:
 You cannot change an existing field's type. Create a new index with the correct mapping
 and reindex your data.
 
-**Field not found when calling `analyze_text_field`**
+**Field not found when calling `test_analyzer_by_fieldname`**
 The field must exist in the mappings and must have an `analyzer` key. `keyword` fields
-have no analyzer — use `analyze_text` with an explicit analyzer name instead.
+have no analyzer — use `test_analyzer_by_name` with an explicit analyzer name instead.
 
 ### See also
 
@@ -727,7 +727,7 @@ puts index.analyzers
 #### Inspect tokens from a named analyzer
 
 ```ruby
-tokens = index.analyze_text(
+tokens = index.test_analyzer_by_name(
   analyzer: "my_english",
   text: "The Running Foxes jumped quickly"
 )
@@ -738,7 +738,7 @@ puts tokens.inspect
 #### Inspect tokens using a field's configured analyzer
 
 ```ruby
-tokens = index.analyze_text_field(
+tokens = index.test_analyzer_by_fieldname(
   field: "title",
   text: "The Running Foxes jumped quickly"
 )
@@ -751,11 +751,11 @@ results exactly match what OpenSearch stores at index time.
 #### Compare index-time and search-time analyzers
 
 If a field uses different analyzers for indexing and querying (`analyzer` vs
-`search_analyzer`), call `analyze_text` explicitly for each:
+`search_analyzer`), call `test_analyzer_by_name` explicitly for each:
 
 ```ruby
-index_tokens  = index.analyze_text(analyzer: "my_index_analyzer",  text: query)
-search_tokens = index.analyze_text(analyzer: "my_search_analyzer", text: query)
+index_tokens  = index.test_analyzer_by_name(analyzer: "my_index_analyzer",  text: query)
+search_tokens = index.test_analyzer_by_name(analyzer: "my_search_analyzer", text: query)
 puts "Indexed as: #{index_tokens}"
 puts "Queried as: #{search_tokens}"
 ```
@@ -778,14 +778,14 @@ Both `"fast"` and `"rapid"` occupy the same position as `"quick"` in this exampl
 **`ArgumentError: Analyzer 'x' does not exist`**
 The analyzer is not defined on this index. Use `index.analyzers` to see what is
 available. Built-in analyzers (e.g. `standard`, `english`) cannot be referenced with
-`analyze_text` — use the raw client's `indices.analyze` API directly for those.
+`test_analyzer_by_name` — use the raw client's `indices.analyze` API directly for those.
 
 **`ArgumentError: No analyzer specified for field 'x'`**
 The field exists but has no `analyzer` key in its mapping (e.g. it is a `keyword`
-field). Use `analyze_text` with an explicit analyzer name instead.
+field). Use `test_analyzer_by_name` with an explicit analyzer name instead.
 
 ### See also
 
-- [Reference: Index#analyze_text](REFERENCE.md#indexanalyze_text)
-- [Reference: Index#analyze_text_field](REFERENCE.md#indexanalyze_text_field)
+- [Reference: Index#test_analyzer_by_name](REFERENCE.md#indextest_analyzer_by_name)
+- [Reference: Index#test_analyzer_by_fieldname](REFERENCE.md#indextest_analyzer_by_fieldname)
 - [OpenSearch text analysis](https://opensearch.org/docs/latest/analyzers/)

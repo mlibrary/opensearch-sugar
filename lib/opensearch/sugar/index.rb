@@ -175,17 +175,19 @@ module OpenSearch::Sugar
     alias_method :analyzers, :all_available_analyzers
 
     # Return the tokens that would be created by putting the provided string into the
-    # given analyzer
+    # given analyzer, which must already be registered on this index.
     # @param analyzer [String] Name of the analyzer (must be defined on this index)
     # @param text [String] the text to analyze
     # @return [Array<String, Array<String>>] A list of tokens produced by the
     #   targeted analyzer. If multiple tokens exist at the same point in the token
     #   stream, they are grouped as a nested Array.
     # @raise [ArgumentError] If the analyzer is not defined on this index
+    # @see OpenSearch::Sugar::Client#test_analyzer_by_definition For testing an analyzer
+    #   defined inline by its components, without registering it on an index first.
     # @example
-    #   index.analyze_text(analyzer: "my_analyzer", text: "Hello, world!")
+    #   index.test_analyzer_by_name(analyzer: "my_analyzer", text: "Hello, world!")
     #   #=> ["hello", "world"]
-    def analyze_text(analyzer:, text:)
+    def test_analyzer_by_name(analyzer:, text:)
       # Check if analyzer exists in index settings
       settings_response = settings
       unless settings_response.dig(name, "settings", "index", "analysis", "analyzer", analyzer)
@@ -212,10 +214,12 @@ module OpenSearch::Sugar
       end
     end
 
+    alias_method :analyze_text, :test_analyzer_by_name
+
     # Analyze text using the analyzer configured for the given field mapping.
     #
     # Looks up the analyzer from the field's mapping definition, then delegates to
-    # {#analyze_text}. Useful when you want to match the exact tokenization that
+    # {#test_analyzer_by_name}. Useful when you want to match the exact tokenization that
     # OpenSearch applies at index time.
     #
     # @param field [String] The field name whose analyzer should be used
@@ -223,10 +227,12 @@ module OpenSearch::Sugar
     # @return [Array<String, Array<String>>] Tokens produced by the field's analyzer
     # @raise [ArgumentError] If the field does not exist in this index's mappings
     # @raise [ArgumentError] If the field has no analyzer configured
+    # @see OpenSearch::Sugar::Client#test_analyzer_by_definition For testing an analyzer
+    #   defined inline by its components, without registering it on an index first.
     # @example
-    #   index.analyze_text_field(field: "title", text: "Running fast")
+    #   index.test_analyzer_by_fieldname(field: "title", text: "Running fast")
     #   #=> ["run", "fast"]
-    def analyze_text_field(field:, text:)
+    def test_analyzer_by_fieldname(field:, text:)
       mappings_response = mappings
       field_mapping = mappings_response.dig(name, "mappings", "properties", field)
       raise ArgumentError, "Field '#{field}' does not exist in index '#{name}'" unless field_mapping
@@ -234,8 +240,10 @@ module OpenSearch::Sugar
       analyzer = field_mapping["analyzer"]
       raise ArgumentError, "No analyzer specified for field '#{field}'" unless analyzer
 
-      analyze_text(analyzer: analyzer, text: text)
+      test_analyzer_by_name(analyzer: analyzer, text: text)
     end
+
+    alias_method :analyze_text_field, :test_analyzer_by_fieldname
 
     # Deletes the document with the given ID from this index
     #
