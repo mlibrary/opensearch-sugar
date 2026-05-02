@@ -495,10 +495,10 @@ index.analyzers  #=> ["my_english", "my_exact"]
 
 ---
 
-### `Index#analyze_text`
+### `Index#test_analyzer_by_name`
 
 ```ruby
-index.analyze_text(analyzer:, text:) → Array<String, Array<String>>
+index.test_analyzer_by_name(analyzer:, text:) → Array<String, Array<String>>
 ```
 
 Returns the tokens produced by the named analyzer when applied to `text`.
@@ -508,8 +508,10 @@ they are grouped as a nested `Array` within the outer array.
 
 **Raises** `ArgumentError` if the analyzer is not defined on this index.
 
+Also available as `#analyze_text` (deprecated alias for backward compatibility).
+
 ```ruby
-index.analyze_text(analyzer: "my_english", text: "Running fast")
+index.test_analyzer_by_name(analyzer: "my_english", text: "Running fast")
 #=> ["run", "fast"]
 
 # With synonyms at the same position:
@@ -518,20 +520,22 @@ index.analyze_text(analyzer: "my_english", text: "Running fast")
 
 ---
 
-### `Index#analyze_text_field`
+### `Index#test_analyzer_by_fieldname`
 
 ```ruby
-index.analyze_text_field(field:, text:) → Array<String, Array<String>>
+index.test_analyzer_by_fieldname(field:, text:) → Array<String, Array<String>>
 ```
 
 Looks up the analyzer configured for `field` in this index's mappings, then delegates
-to `analyze_text`. Produces the exact tokenization applied at index time.
+to `test_analyzer_by_name`. Produces the exact tokenization applied at index time.
 
 **Raises** `ArgumentError` if `field` does not exist in the mappings.  
 **Raises** `ArgumentError` if `field` has no `analyzer` configured (e.g. `keyword` fields).
 
+Also available as `#analyze_text_field` (deprecated alias for backward compatibility).
+
 ```ruby
-index.analyze_text_field(field: "title", text: "Running fast")
+index.test_analyzer_by_fieldname(field: "title", text: "Running fast")
 #=> ["run", "fast"]
 ```
 

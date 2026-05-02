@@ -165,7 +165,7 @@ puts "Mappings applied."
 Before adding data, confirm the analyzer tokenizes as expected:
 
 ```ruby
-tokens = index.analyze_text(analyzer: "book_title", text: "The Lord of the Rings")
+tokens = index.test_analyzer_by_name(analyzer: "book_title", text: "The Lord of the Rings")
 puts "Tokens: #{tokens.join(", ")}"
 ```
 
@@ -230,8 +230,8 @@ search results much easier to diagnose later.
 ```ruby
 title = "The Fellowship of the Ring"
 
-index_tokens  = index.analyze_text(analyzer: "book_title", text: title)
-search_tokens = index.analyze_text(analyzer: "standard",   text: title)
+index_tokens  = index.test_analyzer_by_name(analyzer: "book_title", text: title)
+search_tokens = index.test_analyzer_by_name(analyzer: "standard",   text: title)
 
 puts "Indexed as:  #{index_tokens.join(", ")}"
 puts "Standard as: #{search_tokens.join(", ")}"

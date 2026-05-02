@@ -46,7 +46,7 @@ spec/
       settings_spec.rb          # settings, update_settings (index-level)
       mappings_spec.rb          # mappings, update_mappings
       aliases_spec.rb           # aliases, create_alias
-      analyzer_spec.rb          # all_available_analyzers, analyze_text, analyze_text_field
+      analyzer_spec.rb          # all_available_analyzers, test_analyzer_by_name, test_analyzer_by_fieldname, test_analyzer_by_definition
     models/                     # tagged :slow, :models — excluded from default run
       registration_spec.rb
       lookup_spec.rb

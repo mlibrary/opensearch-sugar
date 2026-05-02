@@ -225,6 +225,65 @@ module OpenSearch::Sugar
       raise OpenSearch::Sugar::Error, "Failed to update mappings for #{index_name}: #{e.message}"
     end
 
+    # Tests a custom "transient" analyzer defined inline by its components, without
+    # requiring the analyzer to be registered on any index. This is useful for
+    # prototyping and iterating on analyzer configurations before committing them to
+    # index settings.
+    #
+    # Sends the definition directly to the cluster-level +/_analyze+ endpoint, so no
+    # index is involved. You must supply at least a +tokenizer+. The +filter+ (token
+    # filters) and +char_filter+ (character filters) keys are optional.
+    #
+    # @param text [String] The text to analyze
+    # @param tokenizer [String] The tokenizer to use (e.g. +"standard"+, +"keyword"+)
+    # @param filter [Array<String, Hash>] Optional token filters to apply in order
+    #   (e.g. +["lowercase", "asciifolding"]+)
+    # @param char_filter [Array<String, Hash>] Optional character filters to apply
+    #   before tokenization (e.g. +["html_strip"]+)
+    # @return [Array<String, Array<String>>] A list of tokens produced by the transient
+    #   analyzer. If multiple tokens share a position in the token stream (e.g. from a
+    #   synonym filter), they are grouped as a nested Array.
+    # @raise [ArgumentError] If +tokenizer+ is nil or empty
+    # @see OpenSearch::Sugar::Index#test_analyzer_by_name For testing a named analyzer
+    #   that is already registered on a specific index.
+    # @see OpenSearch::Sugar::Index#test_analyzer_by_fieldname For testing the analyzer
+    #   configured on a specific index field.
+    # @see https://docs.opensearch.org/latest/api-reference/analyze-apis/#apply-a-custom-transient-analyzer
+    #   OpenSearch Analyze API — Apply a custom transient analyzer
+    # @example Basic transient analyzer
+    #   client.test_analyzer_by_definition(
+    #     text: "Hello, World!",
+    #     tokenizer: "standard",
+    #     filter: ["lowercase"]
+    #   )
+    #   #=> ["hello", "world"]
+    # @example With a character filter
+    #   client.test_analyzer_by_definition(
+    #     text: "<b>Hello</b>",
+    #     tokenizer: "standard",
+    #     char_filter: ["html_strip"],
+    #     filter: ["lowercase"]
+    #   )
+    #   #=> ["hello"]
+    def test_analyzer_by_definition(text:, tokenizer:, filter: [], char_filter: [])
+      raise ArgumentError, "tokenizer cannot be nil or empty" if tokenizer.nil? || tokenizer.to_s.empty?
+
+      body = {tokenizer: tokenizer, text: text}
+      body[:filter] = filter if filter && !filter.empty?
+      body[:char_filter] = char_filter if char_filter && !char_filter.empty?
+
+      response = self.indices.analyze(body: body)
+
+      tokens = response["tokens"]
+      tokens.each_with_index.map do |token, i|
+        if i > 0 && token["position"] == tokens[i - 1]["position"]
+          [token["token"]]
+        else
+          token["token"]
+        end
+      end
+    end
+
     private
 
     # Helper method to safely reopen an index if it's closed

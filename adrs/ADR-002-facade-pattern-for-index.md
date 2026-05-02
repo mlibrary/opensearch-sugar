@@ -53,7 +53,7 @@ index.settings
 index = client.open_or_create_index("my_index")
 
 # Single call for text analysis
-tokens = index.analyze_text(analyzer: "my_analyzer", text: "Hello World")
+tokens = index.test_analyzer_by_name(analyzer: "my_analyzer", text: "Hello World")
 ```
 
 Each method handles errors uniformly and raises `OpenSearch::Sugar::Error` (or a subclass) on

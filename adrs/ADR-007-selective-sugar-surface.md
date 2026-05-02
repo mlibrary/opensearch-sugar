@@ -32,7 +32,7 @@ Sugar wraps only operations where a higher-level interface provides meaningful v
 - **Lifecycle management** that requires orchestration (e.g., model registration and
   deployment — see ADR-003)
 - **Common index management boilerplate** (`open_or_create_index`, `has_index?`, `index_names`)
-- **Text analysis helpers** (`analyze_text`, `analyze_text_field`)
+- **Text analysis helpers** (`test_analyzer_by_name`, `test_analyzer_by_fieldname`, `test_analyzer_by_definition`)
 
 Document CRUD, search, bulk operations, aggregations, and cluster management are intentionally
 left as raw-client operations:

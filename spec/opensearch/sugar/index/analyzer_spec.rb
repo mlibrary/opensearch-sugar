@@ -52,25 +52,29 @@ RSpec.describe OpenSearch::Sugar::Index, "analyzers" do
     end
   end
 
-  describe "#analyze_text" do
+  describe "#test_analyzer_by_name" do
     it "returns the tokens produced by the analyzer" do
-      tokens = index.analyze_text(analyzer: "test_lower", text: "Hello World")
+      tokens = index.test_analyzer_by_name(analyzer: "test_lower", text: "Hello World")
       expect(tokens).to include("hello", "world")
     end
 
     it "lowercases tokens with the test_lower analyzer" do
-      tokens = index.analyze_text(analyzer: "test_lower", text: "ALLCAPS")
+      tokens = index.test_analyzer_by_name(analyzer: "test_lower", text: "ALLCAPS")
       expect(tokens).to include("allcaps")
     end
 
     it "raises ArgumentError for an unknown analyzer" do
       expect {
-        index.analyze_text(analyzer: "nonexistent_analyzer", text: "hello")
+        index.test_analyzer_by_name(analyzer: "nonexistent_analyzer", text: "hello")
       }.to raise_error(ArgumentError, /does not exist/)
+    end
+
+    it "is aliased as #analyze_text" do
+      expect(index.method(:analyze_text)).to eq(index.method(:test_analyzer_by_name))
     end
   end
 
-  describe "#analyze_text_field" do
+  describe "#test_analyzer_by_fieldname" do
     let(:field_mappings) do
       {
         mappings: {
@@ -87,13 +91,13 @@ RSpec.describe OpenSearch::Sugar::Index, "analyzers" do
     before { index.update_mappings(field_mappings) }
 
     it "analyzes text using the field's configured analyzer" do
-      tokens = index.analyze_text_field(field: "body", text: "Hello World")
+      tokens = index.test_analyzer_by_fieldname(field: "body", text: "Hello World")
       expect(tokens).to include("hello", "world")
     end
 
     it "raises ArgumentError for a field that does not exist in the mapping" do
       expect {
-        index.analyze_text_field(field: "nonexistent_field", text: "hello")
+        index.test_analyzer_by_fieldname(field: "nonexistent_field", text: "hello")
       }.to raise_error(ArgumentError, /does not exist/)
     end
 
@@ -101,8 +105,12 @@ RSpec.describe OpenSearch::Sugar::Index, "analyzers" do
       # Add a keyword field (no analyzer) and try to analyze it
       index.update_mappings({mappings: {properties: {status: {type: "keyword"}}}})
       expect {
-        index.analyze_text_field(field: "status", text: "hello")
+        index.test_analyzer_by_fieldname(field: "status", text: "hello")
       }.to raise_error(ArgumentError, /No analyzer/)
+    end
+
+    it "is aliased as #analyze_text_field" do
+      expect(index.method(:analyze_text_field)).to eq(index.method(:test_analyzer_by_fieldname))
     end
   end
 end

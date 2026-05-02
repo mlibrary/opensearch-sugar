@@ -52,6 +52,10 @@ module OpenSearch
       # Sets a cluster-level log level.
       def set_log_level: (?logger: String, ?level: String) -> untyped
 
+      # Tests a custom transient analyzer defined inline by components, without
+      # requiring the analyzer to be registered on any index.
+      def test_analyzer_by_definition: (text: String, tokenizer: String, ?filter: Array[String | Hash[untyped, untyped]], ?char_filter: Array[String | Hash[untyped, untyped]]) -> Array[String | Array[String]]
+
       private
 
       def reopen_index: (String index_name) -> void
@@ -91,11 +95,17 @@ module OpenSearch
       def all_available_analyzers: () -> Array[String]
       def analyzers: () -> Array[String]
 
-      # Returns tokens produced by the named analyzer.
+      # Returns tokens produced by the named analyzer (must be registered on this index).
       # Each element is a String token, or an Array[String] for same-position synonyms.
+      def test_analyzer_by_name: (analyzer: String, text: String) -> Array[String | Array[String]]
+
+      # Deprecated alias for test_analyzer_by_name.
       def analyze_text: (analyzer: String, text: String) -> Array[String | Array[String]]
 
-      # Same as analyze_text but derives the analyzer from the field mapping.
+      # Same as test_analyzer_by_name but derives the analyzer from the field mapping.
+      def test_analyzer_by_fieldname: (field: String, text: String) -> Array[String | Array[String]]
+
+      # Deprecated alias for test_analyzer_by_fieldname.
       def analyze_text_field: (field: String, text: String) -> Array[String | Array[String]]
 
       def delete_by_id: (String id) -> untyped
