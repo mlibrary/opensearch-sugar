@@ -45,4 +45,21 @@ RSpec.describe OpenSearch::Sugar::Client, "analyzer" do
       }.to raise_error(ArgumentError, /tokenizer/)
     end
   end
+
+  describe "#test_analyzer_by_definition with same-position tokens" do
+    it "returns same-position tokens as arrays when a synonym filter expands terms" do
+      tokens = client.test_analyzer_by_definition(
+        text: "quick",
+        tokenizer: "standard",
+        filter: [
+          "lowercase",
+          {type: "synonym", synonyms: ["quick, fast"]}
+        ]
+      )
+      # "quick" expands to both "quick" and "fast" at the same position
+      expect(tokens).to include(["quick", "fast"].sort)
+        .or include(["fast", "quick"].sort)
+        .or(satisfy { |t| t.any? { |tok| tok.is_a?(Array) } })
+    end
+  end
 end

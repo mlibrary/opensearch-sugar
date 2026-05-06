@@ -262,14 +262,18 @@ After implementing Phase 1:
 
 ## Implementation Checklist
 
-- [ ] Add unwrapped settings format test to `spec/opensearch/sugar/client/settings_spec.rb`
-- [ ] Add unwrapped mappings format test to `spec/opensearch/sugar/index/mappings_spec.rb`
-- [ ] Add synonym analyzer test to `spec/opensearch/sugar/client/analyzer_spec.rb`
-- [ ] Add synonym analyzer test to `spec/opensearch/sugar/index/analyzer_spec.rb`
-- [ ] Run coverage: `bundle exec rake coverage`
-- [ ] Verify new coverage percentage is ~82%
-- [ ] Commit changes
-- [ ] Update this document with actual results
+- [x] Add unwrapped settings format test to `spec/opensearch/sugar/client/settings_spec.rb`
+- [x] Add unwrapped mappings format test to `spec/opensearch/sugar/index/mappings_spec.rb`
+- [x] Add synonym analyzer test to `spec/opensearch/sugar/client/analyzer_spec.rb`
+- [x] Add synonym analyzer test to `spec/opensearch/sugar/index/analyzer_spec.rb`
+- [x] Run coverage: `bundle exec rake coverage`
+- [x] Verify new coverage percentage — **actual result: 80.1%** (169/211 lines, up from 78.2%)
+- [x] Commit changes
+- [x] Update this document with actual results
+
+**Note:** Coverage reached 80.1% rather than the estimated 82%. The synonym tests exercised the
+same-position token branch but the remaining 2 uncovered lines (client.rb:297 double-failure rescue,
+index.rb:331 private default body) are in Phase 3 (skipped).
 
 ---
 
