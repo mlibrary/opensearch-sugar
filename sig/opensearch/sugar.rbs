@@ -1,6 +1,162 @@
-module Opensearch
+# RBS type signatures for the OpenSearch::Sugar public API.
+# Keep in sync with lib/opensearch/sugar/**/*.rb.
+
+module OpenSearch
   module Sugar
     VERSION: String
-    # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+    class Error < StandardError
+    end
+
+    # Convenience factory — returns a new Client.
+    def self.client: (**untyped kwargs) -> Client
+
+    # Alias for .client.
+    def self.new: (**untyped kwargs) -> Client
+
+    class Client < ::SimpleDelegator
+      attr_reader raw_client: untyped
+      attr_reader models: Models
+
+      def self.raw_client: (*untyped args, **untyped kwargs) -> untyped
+
+      def initialize: (?host: String, **untyped kwargs) -> void
+
+      def default_args: () -> Hash[Symbol, untyped]
+
+      # Returns true if the named index exists.
+      def has_index?: (String name) -> bool
+
+      # Returns the names of all indices in the cluster.
+      def index_names: () -> Array[String]
+
+      # Opens the named index and returns an Index object.
+      # Raises ArgumentError if the index does not exist.
+      def []: (String index_name) -> Index
+
+      # Opens the named index if it exists; creates it otherwise.
+      def open_or_create_index: (String index_name) -> Index
+
+      # Deletes the named index.
+      # Raises if the index does not exist.
+      def delete_index!: (String index_name) -> untyped
+
+      # Applies settings to an index (close → put_settings → open).
+      # Raises OpenSearch::Sugar::Error on failure.
+      def update_settings: (Hash[untyped, untyped] settings, String index_name) -> untyped
+
+      # Applies mappings to an index (close → put_mapping → open).
+      # Raises OpenSearch::Sugar::Error on failure.
+      def update_mappings: (Hash[untyped, untyped] mappings, String index_name) -> untyped
+
+      # Sets a cluster-level log level.
+      def set_log_level: (?logger: String, ?level: String) -> untyped
+
+      # Tests a custom transient analyzer defined inline by components, without
+      # requiring the analyzer to be registered on any index.
+      def test_analyzer_by_definition: (text: String, tokenizer: String, ?filter: Array[String | Hash[untyped, untyped]], ?char_filter: Array[String | Hash[untyped, untyped]]) -> Array[String | Array[String]]
+
+      private
+
+      def reopen_index: (String index_name) -> void
+    end
+
+    class Index
+      attr_accessor client: Client
+      attr_accessor name: String
+
+      module Include
+        module Utilities
+        end
+      end
+
+      # Opens an existing index. Raises ArgumentError if not found.
+      def self.open: (client: Client, name: String) -> Index
+
+      # Creates a new index. Raises ArgumentError if it already exists.
+      def self.create: (client: Client, name: String, ?knn: bool) -> Index
+
+      def settings: () -> Hash[String, untyped]
+      def update_settings: (Hash[untyped, untyped] settings) -> untyped
+
+      def mappings: () -> Hash[String, untyped]
+      def update_mappings: (Hash[untyped, untyped] mappings) -> untyped
+
+      def delete!: () -> untyped
+
+      # Forces an index refresh so recently indexed documents are immediately searchable.
+      def refresh: () -> untyped
+
+      def count: () -> Integer
+
+      def aliases: () -> Array[String]
+      def create_alias: (String alias_name) -> Array[String]
+
+      def all_available_analyzers: () -> Array[String]
+      def analyzers: () -> Array[String]
+
+      # Returns tokens produced by the named analyzer (must be registered on this index).
+      # Each element is a String token, or an Array[String] for same-position synonyms.
+      def test_analyzer_by_name: (analyzer: String, text: String) -> Array[String | Array[String]]
+
+      # Deprecated alias for test_analyzer_by_name.
+      def analyze_text: (analyzer: String, text: String) -> Array[String | Array[String]]
+
+      # Same as test_analyzer_by_name but derives the analyzer from the field mapping.
+      def test_analyzer_by_fieldname: (field: String, text: String) -> Array[String | Array[String]]
+
+      # Deprecated alias for test_analyzer_by_fieldname.
+      def analyze_text_field: (field: String, text: String) -> Array[String | Array[String]]
+
+      def delete_by_id: (String id) -> untyped
+      def clear!: () -> Integer
+
+      def index_document: (Hash[untyped, untyped] doc, String id) -> untyped
+
+      # Indexes all documents from a JSONL file path or IO-like object.
+      def index_jsonl_file: (String | _EachLine source, id_field: Symbol | String) -> void
+
+      interface _EachLine
+        def each_line: () { (String) -> void } -> void
+      end
+
+      private
+
+      def initialize: (client: Client, name: String) -> void
+      def default_index_body: () -> Hash[Symbol, untyped]
+    end
+
+    class Models
+      # Struct holding name, version, and id for a deployed ML model.
+      class ML_INFO
+        attr_reader name: String
+        attr_reader version: String
+        attr_reader id: String
+
+        def initialize: (String name, String version, String id) -> void
+      end
+
+      def initialize: (Client os) -> void
+
+      # Registers and deploys an ML model. Idempotent — returns existing if found.
+      def register: (name: String, version: String, ?format: String) -> ML_INFO?
+
+      alias deploy register
+
+      # Looks up a model by exact name, exact id, or case-insensitive partial name.
+      def []: (String id_or_fullname_or_nickname) -> ML_INFO?
+
+      def list: () -> Array[ML_INFO]
+      def raw_list: () -> untyped
+
+      def undeploy!: (String name_or_id) -> untyped
+      def delete!: (String name_or_id) -> untyped
+
+      # Creates an ingest pipeline for text-embedding using the named model.
+      def create_pipeline: (name: String, model: String, description: String, field_map: Hash[String, String]) -> untyped
+
+      # Deletes an ingest pipeline by name.
+      def delete_pipeline!: (String pipeline_name) -> untyped
+    end
   end
 end

@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "standard"
-  spec.add_development_dependency "pry-coolline"
+  spec.add_development_dependency "reline" # "pry-coolline"
   spec.add_development_dependency "pry-doc"
   spec.add_development_dependency "pry-inline"
   spec.add_development_dependency "pry-reload"
