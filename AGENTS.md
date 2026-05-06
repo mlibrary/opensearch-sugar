@@ -102,3 +102,19 @@ All design decisions are recorded in `adrs/`.  Use the template in `adrs/ADR-000
 When making a non-trivial architectural
 choice, check the ADRs first. If a decision conflicts with an ADR, raise it explicitly
 rather than quietly working around it.
+
+## Where things go
+
+| What | Where | Notes |
+|---|---|---|
+| Public API documentation | `docs/REFERENCE.md` | Method signatures, parameters, return values |
+| How-to recipes | `docs/HOWTO.md` | Task-oriented guides for common problems |
+| Tutorial content | `docs/TUTORIAL.md` | Step-by-step learning walkthroughs |
+| Conceptual background | `docs/EXPLANATION.md` | Why things work the way they do |
+| Architecture decisions | `adrs/` | Use `ADR-NNN-title.md` format; scaffold with the `adr-create` skill |
+| Agent/AI working plans | project root | Uppercase name, e.g. `Increase_Coverage.md`; these are working documents, not user-facing docs |
+| Gem source code | `lib/opensearch/sugar/` | `snake_case.rb`; mirror namespace in directory structure |
+| Spec files | `spec/opensearch/sugar/` | Mirror source path with `_spec.rb` suffix |
+| RBS type signatures | `sig/opensearch/sugar/` | Mirror source path with `.rbs` suffix |
+| Rake tasks | `Rakefile` | Keep tasks focused; add a `desc` to every task |
+| Gem dependencies | `opensearch-sugar.gemspec` | Runtime deps via `add_dependency`; dev deps via `add_development_dependency` |
