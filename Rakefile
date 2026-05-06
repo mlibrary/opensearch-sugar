@@ -18,4 +18,10 @@ task :steep do
   sh "bundle exec steep check"
 end
 
+desc "Run specs with coverage report"
+task :coverage do
+  ENV["COVERAGE"] = "true"
+  Rake::Task["spec"].invoke
+end
+
 task default: %i[spec standard]

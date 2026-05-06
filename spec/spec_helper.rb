@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+if ENV["COVERAGE"]
+  require "simplecov"
+  SimpleCov.start do
+    add_filter "/spec/"
+    add_filter "/sig/"
+    add_filter "/doc/"
+    add_filter "/docs/"
+    add_filter "/old_docs/"
+    add_filter "/vibe/"
+  end
+end
+
 require "opensearch/sugar"
 require "dotenv"
 

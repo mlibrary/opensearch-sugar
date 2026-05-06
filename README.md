@@ -96,6 +96,20 @@ Run the specs:
 bundle exec rspec
 ```
 
+To generate a coverage report:
+
+```bash
+bundle exec rake coverage
+```
+
+or:
+
+```bash
+COVERAGE=true bundle exec rspec
+```
+
+Coverage reports are written to `coverage/index.html`.
+
 To see full HTTP request/response logs during a run:
 
 ```bash
