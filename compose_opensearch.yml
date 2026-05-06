@@ -1,7 +1,7 @@
 services:
   dor-opensearch:
     image: opensearchproject/opensearch:latest
-    container_name: opensearch
+    container_name: opensearch-opensearch-sugar
     environment:
       - cluster.name=opensearch
       - node.name=opensearch-node
