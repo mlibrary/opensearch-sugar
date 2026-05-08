@@ -82,7 +82,7 @@ module OpenSearch::Sugar
         host: ENV["OPENSEARCH_URL"] || "https://localhost:9000",
         retry_on_failure: 5,
         request_timeout: 5,
-        log: true,
+        log: false,
         trace: false,
         transport_options: {ssl: {verify: false}}
       }
