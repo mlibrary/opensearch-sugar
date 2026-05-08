@@ -66,5 +66,26 @@ RSpec.describe OpenSearch::Sugar::Index, "mappings" do
       end
       expect { index.count }.not_to raise_error
     end
+
+    context "with unwrapped format (no 'mappings' key)" do
+      let(:new_mappings_unwrapped) do
+        {
+          properties: {
+            unwrapped_title: {type: "text"},
+            unwrapped_count: {type: "integer"}
+          }
+        }
+      end
+
+      it "accepts mappings without wrapping in a 'mappings' key" do
+        expect { index.update_mappings(new_mappings_unwrapped) }.not_to raise_error
+      end
+
+      it "makes the new fields visible in mappings after the update" do
+        index.update_mappings(new_mappings_unwrapped)
+        props = index.mappings.dig(index_name, "mappings", "properties")
+        expect(props).to include("unwrapped_title", "unwrapped_count")
+      end
+    end
   end
 end

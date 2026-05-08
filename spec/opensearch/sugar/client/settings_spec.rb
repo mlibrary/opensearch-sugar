@@ -47,3 +47,38 @@ RSpec.describe OpenSearch::Sugar::Client, "cluster settings" do
     end
   end
 end
+
+RSpec.describe OpenSearch::Sugar::Client, "index settings (unwrapped format)" do
+  include_context "opensearch client"
+
+  let(:index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
+
+  before { client.open_or_create_index(index_name) }
+  after { client.delete_index!(index_name) rescue nil }
+
+  describe "#update_settings with unwrapped format" do
+    let(:analyzer_settings_unwrapped) do
+      {
+        analysis: {
+          analyzer: {
+            test_unwrapped: {
+              type: "custom",
+              tokenizer: "standard",
+              filter: ["lowercase"]
+            }
+          }
+        }
+      }
+    end
+
+    it "accepts settings without wrapping in a 'settings' key" do
+      expect { client.update_settings(analyzer_settings_unwrapped, index_name) }.not_to raise_error
+    end
+
+    it "applies the unwrapped settings correctly" do
+      client.update_settings(analyzer_settings_unwrapped, index_name)
+      index = client.open_or_create_index(index_name)
+      expect(index.all_available_analyzers).to include("test_unwrapped")
+    end
+  end
+end

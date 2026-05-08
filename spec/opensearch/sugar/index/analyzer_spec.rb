@@ -74,6 +74,47 @@ RSpec.describe OpenSearch::Sugar::Index, "analyzers" do
     end
   end
 
+  describe "#test_analyzer_by_name with same-position tokens" do
+    let(:synonym_settings) do
+      {
+        settings: {
+          analysis: {
+            filter: {
+              synonym_filter: {
+                type: "synonym",
+                synonyms: ["quick, fast"]
+              }
+            },
+            analyzer: {
+              synonym_lower: {
+                type: "custom",
+                tokenizer: "standard",
+                filter: ["lowercase", "synonym_filter"]
+              }
+            }
+          }
+        }
+      }
+    end
+    let(:synonym_index_name) { "sugar_test_#{SecureRandom.hex(6)}" }
+    let(:synonym_index) do
+      idx = OpenSearch::Sugar::Index.create(client: client, name: synonym_index_name)
+      idx.update_settings(synonym_settings)
+      idx
+    end
+
+    before { synonym_index }
+    after { client.delete_index!(synonym_index_name) rescue nil }
+
+    it "returns same-position tokens as arrays when a synonym filter expands terms" do
+      tokens = synonym_index.test_analyzer_by_name(analyzer: "synonym_lower", text: "quick")
+      # "quick" expands to both "quick" and "fast" at the same position
+      expect(tokens).to satisfy { |t| t.any? { |tok| tok.is_a?(Array) } }
+        .or include(["quick", "fast"].sort)
+        .or include(["fast", "quick"].sort)
+    end
+  end
+
   describe "#test_analyzer_by_fieldname" do
     let(:field_mappings) do
       {
